@@ -1,0 +1,228 @@
+import os
+import re
+from datetime import date, datetime, timedelta
+
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
+from aeroportos import AEROPORTOS
+from database import get_engine
+from setup_db import setup_database
+
+
+@st.cache_resource
+def obter_engine():
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        try:
+            database_url = st.secrets["DATABASE_URL"]
+        except Exception:
+            database_url = None
+    return get_engine(database_url)
+
+
+@st.cache_resource
+def inicializar_banco():
+    setup_database(obter_engine())
+
+
+def formatar_aeroporto(iata):
+    _, cidade, regiao = next(aeroporto for aeroporto in AEROPORTOS if aeroporto[0] == iata)
+    return f"{cidade} - {regiao} ({iata})"
+
+
+def formatar_reais(valor):
+    return f"R$ {valor:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def carregar_alertas_ativos():
+    with obter_engine().connect() as connection:
+        return connection.execute(text("""
+            SELECT a."ID_Alerta", a."ID_Usuario", u."Nome" AS "Nome_Usuario",
+                   a."IATA_Origem", a."IATA_Destino", a."Mes_Viagem_Ou_Data",
+                   a."Preco_Alvo", a."Preco_Atual", a."Ultima_Verificacao",
+                   o."Nome_Cidade" AS "Cidade_Origem", d."Nome_Cidade" AS "Cidade_Destino"
+            FROM "Alertas" a
+            JOIN "Usuarios" u ON u."ID" = a."ID_Usuario"
+            JOIN "Destinos" o ON a."IATA_Origem" = o."IATA"
+            JOIN "Destinos" d ON a."IATA_Destino" = d."IATA"
+            WHERE u."Opt_in" = 1
+            ORDER BY a."ID_Alerta" DESC
+        """)).mappings().all()
+
+
+def carregar_historico_30_dias(id_alerta):
+    limite = (datetime.now() - timedelta(days=30)).isoformat(timespec="seconds")
+    with obter_engine().connect() as connection:
+        linhas = connection.execute(text("""
+            SELECT "Data_Verificacao", "Preco_Encontrado"
+            FROM "Historico_Precos"
+            WHERE "ID_Alerta" = :id_alerta AND "Data_Verificacao" >= :limite
+            ORDER BY "Data_Verificacao"
+        """), {"id_alerta": id_alerta, "limite": limite}).mappings().all()
+    return pd.DataFrame(
+        [(datetime.fromisoformat(linha["Data_Verificacao"]), linha["Preco_Encontrado"])
+         for linha in linhas],
+        columns=["Data", "Preço (R$)"],
+    )
+
+
+def aba_monitoramento():
+    st.subheader("Monitoramento VIP")
+    alertas = carregar_alertas_ativos()
+    if not alertas:
+        st.info("Nenhum alerta ativo. Cadastre um usuário e um alerta na aba Gestão do Sistema.")
+        return
+
+    for alerta in alertas:
+        rota = f"{alerta['IATA_Origem']} → {alerta['IATA_Destino']}"
+        st.markdown(f"#### {rota} · {alerta['Nome_Usuario']}")
+        st.caption(
+            f"{alerta['Cidade_Origem']} para {alerta['Cidade_Destino']} · "
+            f"Viagem: {alerta['Mes_Viagem_Ou_Data']} · "
+            f"Meta: {formatar_reais(alerta['Preco_Alvo'])}"
+        )
+
+        historico = carregar_historico_30_dias(alerta["ID_Alerta"])
+        metricas = st.columns(3)
+        if historico.empty:
+            for coluna, rotulo in zip(metricas, ("Maior preço · 30 dias", "Menor preço · 30 dias", "Preço médio · 30 dias")):
+                coluna.metric(rotulo, "—")
+        else:
+            metricas[0].metric("Maior preço · 30 dias", formatar_reais(historico["Preço (R$)"].max()))
+            metricas[1].metric("Menor preço · 30 dias", formatar_reais(historico["Preço (R$)"].min()))
+            metricas[2].metric("Preço médio · 30 dias", formatar_reais(historico["Preço (R$)"].mean()))
+
+        preco_atual = alerta["Preco_Atual"]
+        if preco_atual is not None and preco_atual <= alerta["Preco_Alvo"]:
+            st.success(f"Abaixo da meta: {formatar_reais(preco_atual)}")
+        elif preco_atual is not None:
+            st.caption(f"Preço atual: {formatar_reais(preco_atual)}")
+        else:
+            st.caption("Aguardando a primeira verificação de preço.")
+
+        figura = px.line(
+            historico,
+            x="Data",
+            y="Preço (R$)",
+            markers=True,
+            labels={"Data": "Verificação", "Preço (R$)": "Preço (R$)"},
+        )
+        figura.update_layout(
+            height=300,
+            margin=dict(l=8, r=8, t=16, b=8),
+            hovermode="x unified",
+        )
+        figura.update_traces(line_color="#0f766e", marker_color="#0f766e")
+        if historico.empty:
+            st.info("Ainda não há registros de preço nos últimos 30 dias.")
+            figura.add_annotation(text="Sem histórico", x=0.5, y=0.5, xref="paper", yref="paper", showarrow=False)
+        st.plotly_chart(figura, use_container_width=True, key=f"historico_{alerta['ID_Alerta']}")
+        st.divider()
+
+
+def cadastrar_usuario():
+    with st.form("form_usuario", clear_on_submit=True):
+        st.markdown("#### Novo usuário")
+        nome = st.text_input("Nome", placeholder="Nome completo")
+        telefone = st.text_input("Telefone com código do país", placeholder="+5511999998888")
+        enviado = st.form_submit_button("Cadastrar usuário", type="primary", use_container_width=True)
+
+    if enviado:
+        nome = nome.strip()
+        telefone = telefone.strip()
+        if not nome:
+            st.error("Informe o nome do usuário.")
+        elif not re.fullmatch(r"\+\d{8,15}", telefone):
+            st.error("Use o telefone internacional com + e DDI, por exemplo +5511999998888.")
+        else:
+            try:
+                with obter_engine().begin() as connection:
+                    connection.execute(text(
+                        'INSERT INTO "Usuarios" ("Nome", "Telefone_WhatsApp") '
+                        'VALUES (:nome, :telefone)'
+                    ), {"nome": nome, "telefone": telefone})
+                st.success("Usuário cadastrado.")
+                st.rerun()
+            except IntegrityError:
+                st.error("Esse telefone já está cadastrado.")
+
+
+def cadastrar_alerta():
+    with obter_engine().connect() as connection:
+        usuarios = connection.execute(text(
+            'SELECT "ID", "Nome" FROM "Usuarios" ORDER BY "Nome"'
+        )).mappings().all()
+
+    st.markdown("#### Novo alerta")
+    if not usuarios:
+        st.info("Cadastre um usuário antes de criar um alerta.")
+        return
+
+    ids_usuarios = [usuario["ID"] for usuario in usuarios]
+    aeroportos = [aeroporto[0] for aeroporto in AEROPORTOS]
+    with st.form("form_alerta", clear_on_submit=True):
+        id_usuario = st.selectbox(
+            "Usuário",
+            ids_usuarios,
+            format_func=lambda valor: next(u["Nome"] for u in usuarios if u["ID"] == valor),
+        )
+        coluna_origem, coluna_destino = st.columns(2)
+        origem = coluna_origem.selectbox("Origem", aeroportos, format_func=formatar_aeroporto)
+        destino = coluna_destino.selectbox(
+            "Destino", aeroportos, index=aeroportos.index("MIA"), format_func=formatar_aeroporto
+        )
+        coluna_data, coluna_preco = st.columns(2)
+        data_viagem = coluna_data.date_input("Data da viagem", value=date.today() + timedelta(days=30))
+        preco_alvo = coluna_preco.number_input("Preço alvo (R$)", min_value=1.0, value=1000.0, step=50.0)
+        enviado = st.form_submit_button("Criar alerta", type="primary", use_container_width=True)
+
+    if enviado:
+        if origem == destino:
+            st.error("Origem e destino precisam ser diferentes.")
+        else:
+            with obter_engine().begin() as connection:
+                connection.execute(text("""
+                    INSERT INTO "Alertas"
+                        ("ID_Usuario", "IATA_Origem", "IATA_Destino", "Mes_Viagem_Ou_Data", "Preco_Alvo")
+                    VALUES (:id_usuario, :origem, :destino, :data_viagem, :preco_alvo)
+                """), {
+                    "id_usuario": id_usuario,
+                    "origem": origem,
+                    "destino": destino,
+                    "data_viagem": data_viagem.isoformat(),
+                    "preco_alvo": preco_alvo,
+                })
+            st.success("Alerta criado.")
+            st.rerun()
+
+
+def aba_gestao():
+    st.subheader("Gestão do Sistema")
+    coluna_usuario, coluna_alerta = st.columns(2, gap="large")
+    with coluna_usuario:
+        cadastrar_usuario()
+    with coluna_alerta:
+        cadastrar_alerta()
+
+
+st.set_page_config(page_title="VOAVOA · Painel", page_icon="✈️", layout="wide")
+st.markdown("""
+<style>
+.block-container { max-width: 1180px; padding-top: 2rem; padding-bottom: 3rem; }
+[data-testid="stMetric"] { border: 1px solid rgba(128, 128, 128, .22); padding: 14px; border-radius: 8px; }
+div[data-testid="stForm"] { border: 1px solid rgba(128, 128, 128, .22); border-radius: 8px; padding: 1rem; }
+</style>
+""", unsafe_allow_html=True)
+
+inicializar_banco()
+st.title("VOAVOA")
+st.caption("Preços de voos e alertas em um só lugar")
+aba_vip, aba_sistema = st.tabs(["Monitoramento VIP", "Gestão do Sistema"])
+with aba_vip:
+    aba_monitoramento()
+with aba_sistema:
+    aba_gestao()

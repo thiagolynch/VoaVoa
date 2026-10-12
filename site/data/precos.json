@@ -1,0 +1,1029 @@
+{
+ "atualizado_em": "2026-10-12T23:27:38+00:00",
+ "parametros": {
+  "origens": [
+   "GRU",
+   "GIG"
+  ],
+  "antecedencia_dias": 60,
+  "noites": 7
+ },
+ "origens": [
+  {
+   "iata": "GRU",
+   "nome": "São Paulo - Guarulhos"
+  },
+  {
+   "iata": "GIG",
+   "nome": "Rio de Janeiro - Galeão"
+  }
+ ],
+ "rotas": [
+  {
+   "id": "GRU-SCL",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "SCL",
+   "destino_nome": "Santiago",
+   "pais": "Chile",
+   "pais_codigo": "CL",
+   "ranking": 1,
+   "historico": [
+    [
+     "2026-08-13",
+     1824.0
+    ],
+    [
+     "2026-08-14",
+     1824.0
+    ],
+    [
+     "2026-08-15",
+     1788.0
+    ],
+    [
+     "2026-08-16",
+     1787.0
+    ],
+    [
+     "2026-08-17",
+     1696.0
+    ],
+    [
+     "2026-08-18",
+     1688.0
+    ],
+    [
+     "2026-08-19",
+     1682.0
+    ],
+    [
+     "2026-08-20",
+     1680.0
+    ],
+    [
+     "2026-08-21",
+     1919.0
+    ],
+    [
+     "2026-08-22",
+     1916.0
+    ],
+    [
+     "2026-08-23",
+     1916.0
+    ],
+    [
+     "2026-08-24",
+     1916.0
+    ],
+    [
+     "2026-08-25",
+     1912.0
+    ],
+    [
+     "2026-08-26",
+     1819.0
+    ],
+    [
+     "2026-08-27",
+     1819.0
+    ],
+    [
+     "2026-08-28",
+     1673.0
+    ],
+    [
+     "2026-08-29",
+     1773.0
+    ],
+    [
+     "2026-08-30",
+     1568.0
+    ],
+    [
+     "2026-08-31",
+     1384.0
+    ],
+    [
+     "2026-09-01",
+     1384.0
+    ],
+    [
+     "2026-09-02",
+     1591.0
+    ],
+    [
+     "2026-09-03",
+     1578.0
+    ],
+    [
+     "2026-09-04",
+     1572.0
+    ],
+    [
+     "2026-09-05",
+     1572.0
+    ],
+    [
+     "2026-09-06",
+     1581.0
+    ],
+    [
+     "2026-09-07",
+     1581.0
+    ],
+    [
+     "2026-09-08",
+     1581.0
+    ],
+    [
+     "2026-09-09",
+     1315.0
+    ],
+    [
+     "2026-09-10",
+     1310.0
+    ],
+    [
+     "2026-09-11",
+     1309.0
+    ],
+    [
+     "2026-09-12",
+     1312.0
+    ],
+    [
+     "2026-09-13",
+     1317.0
+    ],
+    [
+     "2026-09-14",
+     1317.0
+    ],
+    [
+     "2026-09-15",
+     1317.0
+    ],
+    [
+     "2026-09-16",
+     1331.0
+    ],
+    [
+     "2026-09-17",
+     1331.0
+    ],
+    [
+     "2026-09-18",
+     1696.0
+    ],
+    [
+     "2026-09-19",
+     1696.0
+    ],
+    [
+     "2026-09-20",
+     1708.0
+    ],
+    [
+     "2026-09-21",
+     1708.0
+    ],
+    [
+     "2026-09-22",
+     1745.0
+    ],
+    [
+     "2026-09-23",
+     2088.0
+    ],
+    [
+     "2026-09-24",
+     1703.0
+    ],
+    [
+     "2026-09-25",
+     1703.0
+    ],
+    [
+     "2026-09-26",
+     1715.0
+    ],
+    [
+     "2026-09-27",
+     1721.0
+    ],
+    [
+     "2026-09-28",
+     1721.0
+    ],
+    [
+     "2026-09-29",
+     1779.0
+    ],
+    [
+     "2026-09-30",
+     1783.0
+    ],
+    [
+     "2026-10-01",
+     1773.0
+    ],
+    [
+     "2026-10-02",
+     1773.0
+    ],
+    [
+     "2026-10-03",
+     1781.0
+    ],
+    [
+     "2026-10-04",
+     1685.0
+    ],
+    [
+     "2026-10-05",
+     1628.0
+    ],
+    [
+     "2026-10-06",
+     1590.0
+    ],
+    [
+     "2026-10-07",
+     1585.0
+    ],
+    [
+     "2026-10-08",
+     1585.0
+    ],
+    [
+     "2026-10-09",
+     1497.0
+    ],
+    [
+     "2026-10-10",
+     1491.0
+    ],
+    [
+     "2026-10-11",
+     1491.0
+    ],
+    [
+     "2026-10-12",
+     1655.0
+    ]
+   ],
+   "stats_30d": {
+    "min": 1312.0,
+    "max": 2088.0,
+    "media": 1620.16,
+    "pontos": 31
+   },
+   "data_ida": "2026-12-11",
+   "data_volta": "2026-12-18",
+   "preco_atual": 1655.0,
+   "nivel": "typical",
+   "faixa_tipica": [
+    1200.0,
+    2300.0
+   ],
+   "companhia": "Aerolineas Argentinas",
+   "escalas": 1,
+   "duracao_min": 785,
+   "google_flights_url": "https://www.google.com/travel/flights?hl=pt&gl=br&curr=BRL&tfs=CBwQAhoeEgoyMDI2LTEyLTExagcIARIDR1JVcgcIARIDU0NMGh4SCjIwMjYtMTItMThqBwgBEgNTQ0xyBwgBEgNHUlVAAUgBcAGYAQE&tfu=EgIIAQ",
+   "verificado_em": "2026-10-12T23:27:35+00:00"
+  },
+  {
+   "id": "GRU-EZE",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "EZE",
+   "destino_nome": "Buenos Aires",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 2,
+   "historico": [
+    [
+     "2026-08-13",
+     1984.0
+    ],
+    [
+     "2026-08-14",
+     2101.0
+    ],
+    [
+     "2026-08-15",
+     2109.0
+    ],
+    [
+     "2026-08-16",
+     2124.0
+    ],
+    [
+     "2026-08-17",
+     2124.0
+    ],
+    [
+     "2026-08-18",
+     2115.0
+    ],
+    [
+     "2026-08-19",
+     2115.0
+    ],
+    [
+     "2026-08-20",
+     2104.0
+    ],
+    [
+     "2026-08-21",
+     2104.0
+    ],
+    [
+     "2026-08-22",
+     2100.0
+    ],
+    [
+     "2026-08-23",
+     2100.0
+    ],
+    [
+     "2026-08-24",
+     2100.0
+    ],
+    [
+     "2026-08-25",
+     2096.0
+    ],
+    [
+     "2026-08-26",
+     2090.0
+    ],
+    [
+     "2026-08-27",
+     2095.0
+    ],
+    [
+     "2026-08-28",
+     1930.0
+    ],
+    [
+     "2026-08-29",
+     1930.0
+    ],
+    [
+     "2026-08-30",
+     1943.0
+    ],
+    [
+     "2026-08-31",
+     1943.0
+    ],
+    [
+     "2026-09-01",
+     1943.0
+    ],
+    [
+     "2026-09-02",
+     2098.0
+    ],
+    [
+     "2026-09-03",
+     2086.0
+    ],
+    [
+     "2026-09-04",
+     2074.0
+    ],
+    [
+     "2026-09-05",
+     2074.0
+    ],
+    [
+     "2026-09-06",
+     2085.0
+    ],
+    [
+     "2026-09-07",
+     1634.0
+    ],
+    [
+     "2026-09-08",
+     1639.0
+    ],
+    [
+     "2026-09-09",
+     1627.0
+    ],
+    [
+     "2026-09-10",
+     1626.0
+    ],
+    [
+     "2026-09-11",
+     1626.0
+    ],
+    [
+     "2026-09-12",
+     1624.0
+    ],
+    [
+     "2026-09-13",
+     1624.0
+    ],
+    [
+     "2026-09-14",
+     1624.0
+    ],
+    [
+     "2026-09-15",
+     1624.0
+    ],
+    [
+     "2026-09-16",
+     1642.0
+    ],
+    [
+     "2026-09-17",
+     2194.0
+    ],
+    [
+     "2026-09-18",
+     2194.0
+    ],
+    [
+     "2026-09-19",
+     2199.0
+    ],
+    [
+     "2026-09-20",
+     2201.0
+    ],
+    [
+     "2026-09-21",
+     2171.0
+    ],
+    [
+     "2026-09-22",
+     2172.0
+    ],
+    [
+     "2026-09-23",
+     2182.0
+    ],
+    [
+     "2026-09-24",
+     2184.0
+    ],
+    [
+     "2026-09-25",
+     2195.0
+    ],
+    [
+     "2026-09-26",
+     2210.0
+    ],
+    [
+     "2026-09-27",
+     2218.0
+    ],
+    [
+     "2026-09-28",
+     2218.0
+    ],
+    [
+     "2026-09-29",
+     2218.0
+    ],
+    [
+     "2026-09-30",
+     2224.0
+    ],
+    [
+     "2026-10-01",
+     2211.0
+    ],
+    [
+     "2026-10-02",
+     2211.0
+    ],
+    [
+     "2026-10-03",
+     2222.0
+    ],
+    [
+     "2026-10-04",
+     2229.0
+    ],
+    [
+     "2026-10-05",
+     2229.0
+    ],
+    [
+     "2026-10-06",
+     2130.0
+    ],
+    [
+     "2026-10-07",
+     2124.0
+    ],
+    [
+     "2026-10-08",
+     1584.0
+    ],
+    [
+     "2026-10-09",
+     1584.0
+    ],
+    [
+     "2026-10-10",
+     1583.0
+    ],
+    [
+     "2026-10-11",
+     1588.0
+    ],
+    [
+     "2026-10-12",
+     1583.0
+    ]
+   ],
+   "stats_30d": {
+    "min": 1583.0,
+    "max": 2229.0,
+    "media": 2006.32,
+    "pontos": 31
+   },
+   "data_ida": "2026-12-11",
+   "data_volta": "2026-12-18",
+   "preco_atual": 1583.0,
+   "nivel": "typical",
+   "faixa_tipica": [
+    1250.0,
+    2600.0
+   ],
+   "companhia": "LATAM",
+   "escalas": 0,
+   "duracao_min": 180,
+   "google_flights_url": "https://www.google.com/travel/flights?hl=pt&gl=br&curr=BRL&tfs=CBwQAhoeEgoyMDI2LTEyLTExagcIARIDR1JVcgcIARIDRVpFGh4SCjIwMjYtMTItMThqBwgBEgNFWkVyBwgBEgNHUlVAAUgBcAGYAQE&tfu=EgIIAQ",
+   "verificado_em": "2026-10-12T23:27:38+00:00"
+  },
+  {
+   "id": "GRU-MCO",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "MCO",
+   "destino_nome": "Orlando",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 3,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-PUJ",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "PUJ",
+   "destino_nome": "Punta Cana",
+   "pais": "República Dominicana",
+   "pais_codigo": "DO",
+   "ranking": 4,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-BRC",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "BRC",
+   "destino_nome": "Bariloche",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 5,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-LIS",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "LIS",
+   "destino_nome": "Lisboa",
+   "pais": "Portugal",
+   "pais_codigo": "PT",
+   "ranking": 6,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-CDG",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "CDG",
+   "destino_nome": "Paris",
+   "pais": "França",
+   "pais_codigo": "FR",
+   "ranking": 7,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-FCO",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "FCO",
+   "destino_nome": "Roma",
+   "pais": "Itália",
+   "pais_codigo": "IT",
+   "ranking": 8,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-ADZ",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "ADZ",
+   "destino_nome": "San Andrés",
+   "pais": "Colômbia",
+   "pais_codigo": "CO",
+   "ranking": 9,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-CUN",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "CUN",
+   "destino_nome": "Cancún",
+   "pais": "México",
+   "pais_codigo": "MX",
+   "ranking": 10,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-CTG",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "CTG",
+   "destino_nome": "Cartagena",
+   "pais": "Colômbia",
+   "pais_codigo": "CO",
+   "ranking": 11,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-LIM",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "LIM",
+   "destino_nome": "Lima",
+   "pais": "Peru",
+   "pais_codigo": "PE",
+   "ranking": 12,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-MVD",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "MVD",
+   "destino_nome": "Montevidéu",
+   "pais": "Uruguai",
+   "pais_codigo": "UY",
+   "ranking": 13,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-MIA",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "MIA",
+   "destino_nome": "Miami",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 14,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-JFK",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "JFK",
+   "destino_nome": "Nova York",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 15,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-MAD",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "MAD",
+   "destino_nome": "Madri",
+   "pais": "Espanha",
+   "pais_codigo": "ES",
+   "ranking": 16,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-LHR",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "LHR",
+   "destino_nome": "Londres",
+   "pais": "Reino Unido",
+   "pais_codigo": "GB",
+   "ranking": 17,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-OPO",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "OPO",
+   "destino_nome": "Porto",
+   "pais": "Portugal",
+   "pais_codigo": "PT",
+   "ranking": 18,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-BCN",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "BCN",
+   "destino_nome": "Barcelona",
+   "pais": "Espanha",
+   "pais_codigo": "ES",
+   "ranking": 19,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GRU-MDZ",
+   "origem": "GRU",
+   "origem_nome": "São Paulo - Guarulhos",
+   "destino": "MDZ",
+   "destino_nome": "Mendoza",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 20,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-SCL",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "SCL",
+   "destino_nome": "Santiago",
+   "pais": "Chile",
+   "pais_codigo": "CL",
+   "ranking": 1,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-EZE",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "EZE",
+   "destino_nome": "Buenos Aires",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 2,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-MCO",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "MCO",
+   "destino_nome": "Orlando",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 3,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-PUJ",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "PUJ",
+   "destino_nome": "Punta Cana",
+   "pais": "República Dominicana",
+   "pais_codigo": "DO",
+   "ranking": 4,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-BRC",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "BRC",
+   "destino_nome": "Bariloche",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 5,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-LIS",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "LIS",
+   "destino_nome": "Lisboa",
+   "pais": "Portugal",
+   "pais_codigo": "PT",
+   "ranking": 6,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-CDG",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "CDG",
+   "destino_nome": "Paris",
+   "pais": "França",
+   "pais_codigo": "FR",
+   "ranking": 7,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-FCO",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "FCO",
+   "destino_nome": "Roma",
+   "pais": "Itália",
+   "pais_codigo": "IT",
+   "ranking": 8,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-ADZ",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "ADZ",
+   "destino_nome": "San Andrés",
+   "pais": "Colômbia",
+   "pais_codigo": "CO",
+   "ranking": 9,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-CUN",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "CUN",
+   "destino_nome": "Cancún",
+   "pais": "México",
+   "pais_codigo": "MX",
+   "ranking": 10,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-CTG",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "CTG",
+   "destino_nome": "Cartagena",
+   "pais": "Colômbia",
+   "pais_codigo": "CO",
+   "ranking": 11,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-LIM",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "LIM",
+   "destino_nome": "Lima",
+   "pais": "Peru",
+   "pais_codigo": "PE",
+   "ranking": 12,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-MVD",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "MVD",
+   "destino_nome": "Montevidéu",
+   "pais": "Uruguai",
+   "pais_codigo": "UY",
+   "ranking": 13,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-MIA",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "MIA",
+   "destino_nome": "Miami",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 14,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-JFK",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "JFK",
+   "destino_nome": "Nova York",
+   "pais": "Estados Unidos",
+   "pais_codigo": "US",
+   "ranking": 15,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-MAD",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "MAD",
+   "destino_nome": "Madri",
+   "pais": "Espanha",
+   "pais_codigo": "ES",
+   "ranking": 16,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-LHR",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "LHR",
+   "destino_nome": "Londres",
+   "pais": "Reino Unido",
+   "pais_codigo": "GB",
+   "ranking": 17,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-OPO",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "OPO",
+   "destino_nome": "Porto",
+   "pais": "Portugal",
+   "pais_codigo": "PT",
+   "ranking": 18,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-BCN",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "BCN",
+   "destino_nome": "Barcelona",
+   "pais": "Espanha",
+   "pais_codigo": "ES",
+   "ranking": 19,
+   "historico": [],
+   "stats_30d": null
+  },
+  {
+   "id": "GIG-MDZ",
+   "origem": "GIG",
+   "origem_nome": "Rio de Janeiro - Galeão",
+   "destino": "MDZ",
+   "destino_nome": "Mendoza",
+   "pais": "Argentina",
+   "pais_codigo": "AR",
+   "ranking": 20,
+   "historico": [],
+   "stats_30d": null
+  }
+ ]
+}

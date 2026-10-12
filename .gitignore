@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Local databases and logs (may contain personal data)
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Local WhatsApp QR session
+qrcode.html
+qrcode.png

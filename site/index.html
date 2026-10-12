@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOAVOA – Preços de passagens</title>
+<meta name="description" content="Acompanhe o preço das passagens para os 20 destinos internacionais mais procurados por brasileiros: menor, maior e média dos últimos 30 dias.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F5; --surface:#FFFFFF; --ink:#14202B; --muted:#5B6B7A; --line:#D5DEE6;
+  --wing:#1F4E8C; --wing-soft:#DCE7F5;
+  --low:#1C7C54; --low-soft:#DDF1E6; --typ:#8A6D1F; --typ-soft:#F5EDD3; --high:#B4442E; --high-soft:#F8E0DA;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1822; --surface:#15222F; --ink:#E6EDF3; --muted:#93A4B5; --line:#26384A;
+  --wing:#7FB0F0; --wing-soft:#1C3350;
+  --low:#5BCB96; --low-soft:#16362A; --typ:#D9B75A; --typ-soft:#3A3118; --high:#F08B74; --high-soft:#43231C;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1822; --surface:#15222F; --ink:#E6EDF3; --muted:#93A4B5; --line:#26384A;
+  --wing:#7FB0F0; --wing-soft:#1C3350;
+  --low:#5BCB96; --low-soft:#16362A; --typ:#D9B75A; --typ-soft:#3A3118; --high:#F08B74; --high-soft:#43231C;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Barlow",system-ui,sans-serif}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+a{color:var(--wing)}
+:focus-visible{outline:3px solid var(--wing);outline-offset:2px;border-radius:4px}
+button{font:inherit;color:inherit}
+
+/* topo */
+.top{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.logo{font:700 26px/1 "Barlow Condensed",sans-serif;letter-spacing:.02em;color:var(--wing);text-decoration:none}
+.updated{color:var(--muted);font-size:14px}
+
+/* abertura */
+.hero{padding:28px 0 20px}
+.hero h1{font:700 clamp(44px,8vw,84px)/.95 "Barlow Condensed",sans-serif;margin:0 0 18px;letter-spacing:-.01em}
+.hero p.lead{font-size:19px;max-width:60ch;margin:0 0 24px;color:var(--muted)}
+.hero p.lead strong{color:var(--ink);font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{border:0;background:none;padding:8px 16px;border-radius:999px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--wing);color:var(--surface)}
+.field{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 14px;height:44px}
+.field input,.field select{border:0;background:none;font:inherit;color:inherit;height:100%;min-width:0}
+.field input{width:170px}
+.field input:focus,.field select:focus{outline:none}
+.field:focus-within{outline:3px solid var(--wing);outline-offset:2px}
+.field label{color:var(--muted);font-size:14px;white-space:nowrap}
+
+.notice{margin:20px 0 0;padding:12px 16px;border-radius:10px;background:var(--typ-soft);color:var(--ink);font-size:15px}
+
+/* lista */
+.board{margin:28px 0 40px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.board-head,.row-main{display:grid;grid-template-columns:minmax(170px,1.5fr) 130px minmax(200px,2fr) 110px 24px;gap:20px;align-items:center;padding:14px 20px}
+.board-head{color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
+.row{border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row-main{width:100%;text-align:left;background:none;border:0;cursor:pointer;padding:18px 20px}
+.row-main:hover{background:color-mix(in srgb,var(--wing-soft) 45%,transparent)}
+.dest{display:flex;flex-direction:column;min-width:0}
+.dest b{font:600 26px/1.05 "Barlow Condensed",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dest span{color:var(--muted);font-size:14px}
+.price{font:600 24px/1 "Barlow Condensed",sans-serif}
+.price small{display:block;font:500 13px/1.4 "Barlow",sans-serif;color:var(--muted)}
+.badge{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:999px;margin-top:6px}
+.b-low{background:var(--low-soft);color:var(--low)} .b-typical{background:var(--typ-soft);color:var(--typ)} .b-high{background:var(--high-soft);color:var(--high)}
+.chev{transition:transform .2s;color:var(--muted)}
+.row[data-open="true"] .chev{transform:rotate(180deg)}
+
+/* termômetro: faixa de 30 dias com o preço de hoje */
+.gauge{position:relative;height:38px}
+.gauge .track{position:absolute;left:0;right:0;top:12px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--low-soft),var(--typ-soft) 50%,var(--high-soft))}
+.gauge .typ{position:absolute;top:10px;height:14px;border:2px solid var(--typ);border-radius:7px;opacity:.7}
+.gauge .avg{position:absolute;top:7px;width:2px;height:20px;background:var(--muted)}
+.gauge .now{position:absolute;top:6px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--wing);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--wing)}
+.gauge .ends{position:absolute;left:0;right:0;top:25px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.trend{font-size:14px;font-weight:600}
+.trend.down{color:var(--low)} .trend.up{color:var(--high)} .trend.flat{color:var(--muted)}
+
+/* detalhe */
+.detail{display:none;padding:4px 20px 24px}
+.row[data-open="true"] .detail{display:block;animation:open .22s ease-out}
+@keyframes open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.stat{background:var(--surface);padding:12px 14px}
+.stat span{display:block;font-size:13px;color:var(--muted)}
+.stat b{font:600 22px/1.2 "Barlow Condensed",sans-serif}
+.chart{position:relative;width:100%;height:220px}
+.chart svg{width:100%;height:100%;display:block;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:13px;padding:4px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-130%);display:none}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--muted);font-size:15px;margin:14px 0 18px}
+.facts b{color:var(--ink);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;font-weight:600;text-decoration:none;border:1px solid var(--wing)}
+.btn.primary{background:var(--wing);color:var(--surface)}
+.btn.ghost{color:var(--wing);background:none}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+
+footer{color:var(--muted);font-size:14px;padding:0 0 48px}
+footer h2{font:600 22px/1.2 "Barlow Condensed",sans-serif;color:var(--ink);margin:0 0 8px}
+footer p{max-width:72ch;margin:0 0 10px}
+
+@media (max-width:760px){
+  .board-head{display:none}
+  .row-main{grid-template-columns:1fr auto 18px;grid-template-areas:"dest price chev" "gauge gauge gauge" "trend trend trend";gap:10px 14px}
+  .dest{grid-area:dest} .dest b{white-space:normal} .price{grid-area:price;text-align:right} .gauge{grid-area:gauge} .trend{grid-area:trend} .chev{grid-area:chev}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .field input{width:120px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="logo" href="./">VOAVOA</a>
+    <span class="updated" id="updated"></span>
+  </header>
+
+  <section class="hero">
+    <h1>É hora de comprar?</h1>
+    <p class="lead" id="lead">Carregando preços…</p>
+    <div class="controls">
+      <div class="seg" id="origins" role="group" aria-label="Cidade de saída"></div>
+      <div class="field"><label for="q">Destino</label><input id="q" type="search" placeholder="Lisboa, Chile…" autocomplete="off"></div>
+      <div class="field"><label for="sort">Ordenar</label>
+        <select id="sort">
+          <option value="deal">Melhor oportunidade</option>
+          <option value="price">Menor preço</option>
+          <option value="rank">Mais procurados</option>
+        </select>
+      </div>
+    </div>
+    <p class="notice" id="notice" hidden></p>
+  </section>
+
+  <section class="board" aria-live="polite">
+    <div class="board-head"><span>Destino</span><span>Ida e volta</span><span>Hoje em relação aos últimos 30 dias</span><span>Tendência</span><span></span></div>
+    <div id="list"></div>
+  </section>
+
+  <footer>
+    <h2>Como ler esta página</h2>
+    <p>Para cada destino buscamos o voo mais barato de ida e volta saindo daqui a cerca de <span id="adv">60</span> dias, com <span id="nights">7</span> noites de estadia. A barra mostra onde o preço de hoje (bolinha azul) está entre o menor e o maior valor visto nos últimos 30 dias; o traço é a média e o contorno dourado é a faixa que o Google considera normal para a rota.</p>
+    <p>Preços em reais, coletados no Google Flights por meio da SerpApi. São uma referência e podem mudar a qualquer momento — confirme sempre no site da companhia ou da agência antes de comprar. Ranking dos destinos baseado em levantamentos de buscas da Decolar (2025–2026).</p>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script>
+const CFG = Object.assign({ whatsapp: "" }, window.VOAVOA_CONFIG || {});
+const brl = v => v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const dt = s => new Date(s + (s.length === 10 ? "T12:00:00" : "")).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+const flag = cc => cc ? cc.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt())) : "";
+const LEVEL = { low: ["Preço baixo", "b-low"], typical: ["Preço normal", "b-typical"], high: ["Preço alto", "b-high"] };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let DATA = null, origin = null;
+const state = { q: "", sort: "deal", open: null };
+try { state.sort = localStorage.getItem("voavoa.sort") || "deal"; origin = localStorage.getItem("voavoa.origin"); } catch (e) {}
+
+async function load() {
+  let data = null, demo = false;
+  try { data = await (await fetch("data/precos.json", { cache: "no-store" })).json(); } catch (e) {}
+  if (!data || !(data.rotas || []).some(r => r.preco_atual != null)) {
+    try { data = await (await fetch("data/demo.json")).json(); demo = true; } catch (e) {}
+  }
+  if (!data) { document.getElementById("lead").textContent = "Não foi possível carregar os preços agora. Atualize a página em alguns minutos."; return; }
+  DATA = data;
+  if (demo) {
+    const n = document.getElementById("notice");
+    n.hidden = false;
+    n.textContent = "Você está vendo dados de demonstração. Os preços reais aparecem aqui depois da primeira varredura automática.";
+  }
+  const p = data.parametros || {};
+  document.getElementById("adv").textContent = p.antecedencia_dias ?? 60;
+  document.getElementById("nights").textContent = p.noites ?? 7;
+  if (data.atualizado_em) document.getElementById("updated").textContent =
+    "Atualizado em " + new Date(data.atualizado_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const origins = data.origens || [];
+  if (!origins.some(o => o.iata === origin)) origin = origins[0]?.iata;
+  const seg = document.getElementById("origins");
+  seg.innerHTML = origins.map(o => `<button type="button" data-o="${esc(o.iata)}" aria-pressed="${o.iata === origin}">${esc(o.nome.split(" - ")[0])} <span style="opacity:.7">${esc(o.iata)}</span></button>`).join("");
+  seg.onclick = e => { const b = e.target.closest("button"); if (!b) return; origin = b.dataset.o; state.open = null;
+    seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); try { localStorage.setItem("voavoa.origin", origin); } catch (e) {} render(); };
+  document.getElementById("sort").value = state.sort;
+  render();
+}
+
+function deal(r) { const s = r.stats_30d; return r.preco_atual != null && s ? (r.preco_atual - s.media) / s.media : Infinity; }
+
+function render() {
+  const q = state.q.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const all = DATA.rotas.filter(r => r.origem === origin);
+  let rows = all.filter(r => !q || (r.destino_nome + " " + r.pais + " " + r.destino).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().includes(q));
+  const by = { deal: (a, b) => deal(a) - deal(b), price: (a, b) => (a.preco_atual ?? 1e12) - (b.preco_atual ?? 1e12), rank: (a, b) => a.ranking - b.ranking };
+  rows.sort(by[state.sort]);
+
+  const priced = all.filter(r => r.preco_atual != null);
+  const lows = priced.filter(r => r.nivel === "low" || deal(r) <= -0.08);
+  const cheapest = priced.slice().sort((a, b) => a.preco_atual - b.preco_atual)[0];
+  const from = (DATA.origens.find(o => o.iata === origin)?.nome || origin).split(" - ")[0];
+  document.getElementById("lead").innerHTML = priced.length
+    ? `Saindo de ${esc(from)}, <strong>${lows.length} de ${all.length} destinos</strong> estão abaixo do preço normal hoje. O mais barato é <strong>${esc(cheapest.destino_nome)} por ${brl(cheapest.preco_atual)}</strong> ida e volta.`
+    : `Ainda não temos preços para os voos saindo de ${esc(from)}. Eles aparecem aqui conforme a varredura diária avança.`;
+
+  const list = document.getElementById("list");
+  if (!rows.length) { list.innerHTML = `<div class="empty">Nenhum destino encontrado para “${esc(state.q)}”. Tente o nome da cidade ou do país.</div>`; return; }
+  list.innerHTML = rows.map(rowHTML).join("");
+  if (state.open) { const r = rows.find(x => x.id === state.open); if (r) drawChart(r); }
+}
+
+function gauge(r) {
+  const s = r.stats_30d; if (!s || r.preco_atual == null) return `<div class="gauge"><div class="track" style="opacity:.4"></div><div class="ends"><span>Sem histórico ainda</span></div></div>`;
+  const lo = Math.min(s.min, r.preco_atual, r.faixa_tipica?.[0] ?? Infinity), hi = Math.max(s.max, r.preco_atual, r.faixa_tipica?.[1] ?? -Infinity);
+  const pos = v => hi === lo ? 50 : ((v - lo) / (hi - lo)) * 100;
+  const typ = r.faixa_tipica ? `<div class="typ" style="left:${pos(r.faixa_tipica[0])}%;width:${pos(r.faixa_tipica[1]) - pos(r.faixa_tipica[0])}%" title="Faixa normal segundo o Google"></div>` : "";
+  return `<div class="gauge" aria-label="Hoje ${brl(r.preco_atual)}; mínimo ${brl(s.min)}, média ${brl(s.media)}, máximo ${brl(s.max)} em 30 dias">
+    <div class="track"></div>${typ}<div class="avg" style="left:${pos(s.media)}%" title="Média 30 dias: ${brl(s.media)}"></div>
+    <div class="now" style="left:${pos(r.preco_atual)}%"></div>
+    <div class="ends num"><span>${brl(s.min)}</span><span>${brl(s.max)}</span></div></div>`;
+}
+
+function trend(r) {
+  const d = deal(r); if (!isFinite(d)) return `<span class="trend flat">—</span>`;
+  const pct = Math.round(Math.abs(d) * 100);
+  if (pct < 3) return `<span class="trend flat">Na média</span>`;
+  return d < 0 ? `<span class="trend down num">${pct}% abaixo da média</span>` : `<span class="trend up num">${pct}% acima da média</span>`;
+}
+
+function rowHTML(r) {
+  const lvl = LEVEL[r.nivel];
+  const open = state.open === r.id;
+  const s = r.stats_30d || {};
+  const wa = CFG.whatsapp && r.preco_atual != null
+    ? `<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Quero receber alerta de preço no WhatsApp para ${r.origem_nome} (${r.origem}) → ${r.destino_nome} (${r.destino}). Meu preço-alvo é R$ `)}">Quero alerta no WhatsApp</a>` : "";
+  const facts = r.preco_atual == null ? "" : `<div class="facts">
+      <span>Ida <b>${dt(r.data_ida)}</b>, volta <b>${dt(r.data_volta)}</b></span>
+      ${r.companhia ? `<span>Companhia <b>${esc(r.companhia)}</b></span>` : ""}
+      ${r.escalas != null ? `<span><b>${r.escalas === 0 ? "Voo direto" : r.escalas + (r.escalas > 1 ? " escalas" : " escala")}</b> na ida</span>` : ""}
+      ${r.faixa_tipica ? `<span>Faixa normal <b class="num">${brl(r.faixa_tipica[0])} a ${brl(r.faixa_tipica[1])}</b></span>` : ""}
+      ${r.verificado_em ? `<span>Consultado em <b>${new Date(r.verificado_em).toLocaleDateString("pt-BR")}</b></span>` : ""}
+    </div>`;
+  return `<div class="row" data-open="${open}" data-id="${esc(r.id)}">
+    <button class="row-main" type="button" aria-expanded="${open}" aria-controls="d-${esc(r.id)}">
+      <span class="dest"><b>${flag(r.pais_codigo)} ${esc(r.destino_nome)}</b><span>${esc(r.pais)} (${esc(r.destino)})</span></span>
+      <span class="price num">${brl(r.preco_atual)}${lvl ? `<br><span class="badge ${lvl[1]}">${lvl[0]}</span>` : `<small>${r.preco_atual == null ? "aguardando consulta" : ""}</small>`}</span>
+      ${gauge(r)}
+      ${trend(r)}
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    </button>
+    <div class="detail" id="d-${esc(r.id)}">
+      ${r.preco_atual == null ? `<p class="empty">Esta rota ainda não foi consultada. A varredura diária passa por todas em poucos dias.</p>` : `
+      <div class="stats num">
+        <div class="stat"><span>Hoje</span><b>${brl(r.preco_atual)}</b></div>
+        <div class="stat"><span>Menor em 30 dias</span><b>${brl(s.min)}</b></div>
+        <div class="stat"><span>Média em 30 dias</span><b>${brl(s.media)}</b></div>
+        <div class="stat"><span>Maior em 30 dias</span><b>${brl(s.max)}</b></div>
+      </div>
+      <div class="chart" id="c-${esc(r.id)}"></div>
+      ${facts}
+      <div class="actions">
+        <a class="btn primary" target="_blank" rel="noopener" href="${esc(r.google_flights_url)}">Ver voos no Google Flights</a>
+        ${wa}
+      </div>`}
+    </div>
+  </div>`;
+}
+
+function drawChart(r) {
+  const box = document.getElementById("c-" + r.id); if (!box) return;
+  const pts = (r.historico || []).filter(p => p[0] >= new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10));
+  if (pts.length < 2) { box.outerHTML = ""; return; }
+  const W = box.clientWidth, H = box.clientHeight, P = { l: 56, r: 10, t: 12, b: 26 };
+  const xs = pts.map(p => new Date(p[0] + "T12:00:00").getTime()), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys), pad = (yMax - yMin) * .12 || 50;
+  const y0 = yMin - pad, y1 = yMax + pad;
+  const X = t => P.l + (t - x0) / (x1 - x0) * (W - P.l - P.r), Y = v => P.t + (1 - (v - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${X(xs[i]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+  const area = line + `L${X(x1)},${H - P.b}L${X(x0)},${H - P.b}Z`;
+  const ticks = [y0 + (y1 - y0) * .1, (y0 + y1) / 2, y1 - (y1 - y0) * .1];
+  const cut = X(Date.now() - 30 * 864e5);
+  const typ = r.faixa_tipica ? `<rect x="${P.l}" width="${W - P.l - P.r}" y="${Y(Math.min(r.faixa_tipica[1], y1))}" height="${Math.max(0, Y(Math.max(r.faixa_tipica[0], y0)) - Y(Math.min(r.faixa_tipica[1], y1)))}" fill="var(--typ-soft)" opacity=".7"/>` : "";
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Histórico de preços de ${esc(r.destino_nome)}">
+    ${typ}
+    ${cut > P.l ? `<rect x="${P.l}" y="${P.t}" width="${cut - P.l}" height="${H - P.t - P.b}" fill="var(--bg)" opacity=".6"/><text x="${cut + 6}" y="${P.t + 12}" font-size="12" fill="var(--muted)">últimos 30 dias</text><line x1="${cut}" x2="${cut}" y1="${P.t}" y2="${H - P.b}" stroke="var(--line)" stroke-dasharray="3 3"/>` : ""}
+    ${ticks.map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${P.l - 8}" y="${Y(t) + 4}" font-size="12" text-anchor="end" fill="var(--muted)">${brl(t)}</text>`).join("")}
+    <path d="${area}" fill="var(--wing)" opacity=".08"/>
+    <path d="${line}" fill="none" stroke="var(--wing)" stroke-width="2.2" stroke-linejoin="round"/>
+    <text x="${P.l}" y="${H - 6}" font-size="12" fill="var(--muted)">${dt(pts[0][0])}</text>
+    <text x="${W - P.r}" y="${H - 6}" font-size="12" text-anchor="end" fill="var(--muted)">${dt(pts.at(-1)[0])}</text>
+    <circle id="dot" r="5" fill="var(--wing)" stroke="var(--surface)" stroke-width="2" style="display:none"/>
+  </svg><div class="tip num"></div>`;
+  const svg = box.querySelector("svg"), dot = box.querySelector("#dot"), tip = box.querySelector(".tip");
+  const show = cx => {
+    let i = 0, best = Infinity; xs.forEach((t, k) => { const d = Math.abs(X(t) - cx); if (d < best) { best = d; i = k; } });
+    dot.setAttribute("cx", X(xs[i])); dot.setAttribute("cy", Y(ys[i])); dot.style.display = "";
+    tip.style.display = "block"; tip.style.left = X(xs[i]) + "px"; tip.style.top = Y(ys[i]) + "px";
+    tip.textContent = `${dt(pts[i][0])}: ${brl(ys[i])}`;
+  };
+  svg.addEventListener("pointermove", e => { const b = svg.getBoundingClientRect(); show((e.clientX - b.left) * W / b.width); });
+  svg.addEventListener("pointerleave", () => { dot.style.display = "none"; tip.style.display = "none"; });
+}
+
+document.getElementById("list").addEventListener("click", e => {
+  const btn = e.target.closest(".row-main"); if (!btn) return;
+  const id = btn.parentElement.dataset.id;
+  state.open = state.open === id ? null : id;
+  render();
+  if (state.open) document.querySelector(`[data-id="${CSS.escape(id)}"] .row-main`)?.focus({ preventScroll: true });
+});
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; try { localStorage.setItem("voavoa.sort", state.sort); } catch (x) {} render(); });
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => DATA && render(), 150); });
+load();
+</script>
+</body>
+</html>
