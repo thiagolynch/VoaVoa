@@ -101,6 +101,15 @@ docker compose up -d --build whatsapp-bot
 
 O segundo comando aponta a Evolution API pra chamar o bot quando chegar mensagem; só precisa rodar de novo se a instância da Evolution for recriada.
 
+## 6. Rodar sem deixar o PC ligado o dia todo
+
+Enquanto a Evolution API/bot rodarem localmente (sem VPS), o PC precisa estar ligado pra receber mensagens de WhatsApp em tempo real. Pra não precisar deixá-lo ligado o dia inteiro, use o **modo suspenso + despertadores do Windows**:
+
+- `acordar_e_processar.ps1`: sobe o Docker (inicia o Docker Desktop se precisar), espera a Evolution API reconectar e o bot processar as mensagens que chegaram enquanto o PC estava suspenso, e (só quando chamado com `-RodarMotorBusca`) roda `motor_busca.py`.
+- Três tarefas agendadas (`VOAVOA Acordar 0730 (alertas)`, `1330 (whatsapp)`, `1930 (whatsapp)`), com **"Wake the computer to run this task"** habilitado — o Windows acorda o PC sozinho do modo suspenso nesses horários. Só a tarefa das 07:30 passa `-RodarMotorBusca`, pra não rodar a verificação de preços 3x ao dia (triplicaria o consumo de cota da SerpApi).
+- Isso exige que o Windows tenha permissão de usar despertadores (`powercfg /SETACVALUEINDEX SCHEME_CURRENT SUB_SLEEP RTCWAKE 1` e o mesmo com `/SETDCVALUEINDEX`, se for notebook na bateria) e que o PC seja **suspenso** (não desligado) nos intervalos — suspender permite o despertador; desligado por completo, nem sempre.
+- Trade-off: mensagens de WhatsApp recebidas fora dessas janelas só são respondidas na próxima vez que o PC acordar (até ~6h de atraso, com 3 janelas por dia). Pra resposta instantânea 24h, a Evolution API/bot precisariam rodar num VPS sempre ligado, fora do PC do usuário.
+
 ## Desenvolvimento local
 
 Com `DATABASE_URL=sqlite:///voavoa.db` no `.env`, execute:
