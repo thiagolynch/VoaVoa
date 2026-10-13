@@ -152,7 +152,7 @@ A página estática (`site/index.html` + `site/config.js`) lê esse JSON diretam
 
 `whatsapp.py` desativa o envio automaticamente quando roda no GitHub Actions apontando para uma Evolution API em `localhost`/`127.0.0.1` (inalcançável da nuvem) — nesse caso o preço ainda é gravado, só a mensagem não é enviada.
 
-**PC em modo suspenso, não ligado o dia todo**: como a Evolution API/bot rodam localmente, `acordar_e_processar.ps1` + três tarefas agendadas com "Wake the computer to run this task" fazem o Windows acordar sozinho do modo suspenso 3x/dia (07:30, 13:30, 19:30), subir o Docker, deixar o bot processar o que chegou enquanto estava suspenso, e (só na janela das 07:30) rodar `motor_busca.py`. Ver `DEPLOY.md` seção 6. O trade-off é latência: mensagens de WhatsApp só são respondidas na próxima janela de despertar, não instantaneamente.
+**PC em modo suspenso, não ligado o dia todo**: como a Evolution API/bot rodam localmente, `acordar_e_processar.ps1` + duas tarefas agendadas com "Wake the computer to run this task" fazem o Windows acordar sozinho do modo suspenso 2x/dia (meio-dia e 19h), subir o Docker, deixar o bot processar o que chegou enquanto estava suspenso, e rodar `motor_busca.py` (alertas chegam por volta desses dois horários). Ver `DEPLOY.md` seção 6. Trade-offs: mensagens de WhatsApp só são respondidas na próxima janela (não instantaneamente), e rodar `motor_busca.py` 2x/dia em vez de 1x dobra o consumo de cota da SerpApi.
 
 ### 5.3 Autoatendimento: formulário público + bot de WhatsApp
 

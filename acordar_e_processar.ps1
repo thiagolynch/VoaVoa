@@ -1,9 +1,11 @@
 # VOAVOA - acorda, sobe o Docker, deixa o bot processar mensagens de
-# WhatsApp pendentes e (so na janela da manha) roda motor_busca.py.
+# WhatsApp pendentes e, quando chamado com -RodarMotorBusca, roda
+# motor_busca.py (verifica precos e manda alertas).
 #
 # Chamado pelas tarefas agendadas "VOAVOA Acordar ..." (ver README/DEPLOY).
-# -RodarMotorBusca so deve ser usado numa das janelas do dia, pra nao
-# triplicar o consumo de cota da SerpApi.
+# Cada janela que rodar motor_busca.py conta como mais uma consulta/dia
+# de cota da SerpApi por alerta - use -RodarMotorBusca só nas janelas
+# que devem mesmo verificar preço.
 
 param(
     [switch]$RodarMotorBusca
@@ -49,7 +51,7 @@ if ($RodarMotorBusca) {
     Log "Rodando motor_busca.py..."
     & "$projeto\venv\Scripts\python.exe" "$projeto\motor_busca.py" *>> $logFile
 } else {
-    Log "Janela so de WhatsApp - motor_busca.py nao roda agora (evita gastar cota 3x/dia)."
+    Log "Janela so de WhatsApp - motor_busca.py nao roda agora (evita gastar cota extra)."
 }
 
 Log "Concluido. O Windows volta a suspender sozinho depois do tempo de inatividade configurado."
