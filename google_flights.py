@@ -4,6 +4,10 @@ google_flights.py
 Cliente da SerpApi (motor Google Flights). Retorna o menor preço e também os
 "price insights" do Google: nível do preço (baixo/típico/alto), faixa típica
 e o histórico de preços dos últimos ~60 dias — com uma única consulta.
+
+`origem` pode ser mais de um aeroporto numa string separada por vírgula
+(ex.: "GIG,SDU") — a SerpApi/Google Flights aceita vários IATA em
+departure_id e devolve o melhor preço considerando qualquer um deles.
 """
 import os
 import urllib.parse
@@ -29,6 +33,7 @@ class ResultadoBusca:
     companhia: str | None = None
     escalas: int | None = None
     duracao_min: int | None = None
+    aeroporto_saida: str | None = None           # de qual aeroporto saiu o voo mais barato
     google_flights_url: str | None = None
 
 
@@ -57,7 +62,9 @@ def _historico(price_history) -> list[tuple[str, float]]:
 
 
 def buscar_voo(origem: str, destino: str, ida: str, volta: str | None = None) -> ResultadoBusca | None:
-    """Consulta a SerpApi. `ida`/`volta` em AAAA-MM-DD; sem `volta` = só ida."""
+    """Consulta a SerpApi. `ida`/`volta` em AAAA-MM-DD; sem `volta` = só ida.
+    `origem` aceita um único IATA ("GIG") ou vários separados por vírgula
+    ("GIG,SDU"), numa única consulta/cota gasta."""
     chave = os.getenv("SERPAPI_KEY")
     if not chave:
         logger.error("SERPAPI_KEY não configurada (.env ou secrets do GitHub).")
@@ -98,6 +105,7 @@ def buscar_voo(origem: str, destino: str, ida: str, volta: str | None = None) ->
             if isinstance(v.get("price"), (int, float))]
     insights = payload.get("price_insights") or {}
 
+    aeroporto_saida = None
     if voos:
         melhor = min(voos, key=lambda v: v["price"])
         trechos = melhor.get("flights") or [{}]
@@ -105,6 +113,7 @@ def buscar_voo(origem: str, destino: str, ida: str, volta: str | None = None) ->
         companhia = trechos[0].get("airline")
         escalas = max(len(trechos) - 1, 0)
         duracao = melhor.get("total_duration")
+        aeroporto_saida = (trechos[0].get("departure_airport") or {}).get("id")
     elif isinstance(insights.get("lowest_price"), (int, float)):
         preco, companhia, escalas, duracao = float(insights["lowest_price"]), None, None, None
     else:
@@ -124,10 +133,11 @@ def buscar_voo(origem: str, destino: str, ida: str, volta: str | None = None) ->
         companhia=companhia,
         escalas=escalas,
         duracao_min=duracao if isinstance(duracao, int) else None,
+        aeroporto_saida=aeroporto_saida,
         google_flights_url=url,
     )
     logger.debug(
-        f"{rota}: R$ {preco:.2f} | nível={resultado.nivel} | "
+        f"{rota}: R$ {preco:.2f} | nível={resultado.nivel} | saída={aeroporto_saida} | "
         f"{len(resultado.historico)} pontos de histórico"
     )
     return resultado

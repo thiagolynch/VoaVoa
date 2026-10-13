@@ -33,7 +33,6 @@ from whatsapp import enviar_alerta_whatsapp, whatsapp_configurado
 CONVERSA_TTL_MINUTOS = 30
 CAMPOS_PERGUNTAS = {
     "nome": "Pra chamar você como, qual seu nome?",
-    "preco_alvo": "Qual o preço-alvo (em R$) pra essa rota? Ex: 2000",
     "data_viagem": (
         "Pra qual data ou mês da viagem? Ex: 2027-01 ou 15/01/2027.\n"
         "Se a data for flexível, manda um período, ex: 01/01/2027 a 10/01/2027"
@@ -41,10 +40,11 @@ CAMPOS_PERGUNTAS = {
     "duracao_min_noites": "Quantas noites no mínimo você quer ficar? Ex: 5",
 }
 TEXTO_AJUDA = (
-    "✈️ *VOAVOA*\n\nPra criar um alerta, me manda a origem e o destino "
+    "✈️ *VOAVOA*\n\nPra acompanhar o preço de uma rota, me manda a origem e o destino "
     "(código do aeroporto), por exemplo:\n*GRU SCL*\n\n"
     "Pra vários destinos de uma vez, separe por vírgula:\n*GRU SCL,EZE,LIM*\n\n"
-    "Ou clique em \"Quero alerta no WhatsApp\" na vitrine de preços."
+    "Sem preço-alvo: acompanhamos desde hoje e avisamos quando o preço cair de verdade.\n\n"
+    "Ou clique em \"Quero acompanhar no WhatsApp\" na vitrine de preços."
 )
 
 engine = get_engine()
@@ -140,7 +140,7 @@ def parse_janela(texto: str) -> tuple[str, str] | None:
 
 def extrair_pedido(texto: str) -> dict | None:
     """Reconhece tanto o texto pré-preenchido do botão do site quanto um
-    pedido livre curto ("GRU SCL 2000" ou "GRU SCL,EZE,LIM 2000")."""
+    pedido livre curto ("GRU SCL" ou "GRU SCL,EZE,LIM")."""
     m = re.search(r"\(([A-Za-z]{3})\).*?\(([A-Za-z]{3})\)", texto)
     resto = None
     if m:
@@ -159,12 +159,7 @@ def extrair_pedido(texto: str) -> dict | None:
     if not destinos_validos:
         return None
 
-    preco_match = re.search(r"R\$\s*([\d.,]+)", texto)
-    preco = parse_preco(preco_match.group(1)) if preco_match else None
-    if preco is None and resto:
-        preco = parse_preco(resto)
-
-    return {"origem": origem, "destinos": destinos_validos, "preco_alvo": preco}
+    return {"origem": origem, "destinos": destinos_validos}
 
 
 # ─── Estado da conversa (tabela Conversas_Bot) ──────────────────────────────
@@ -207,8 +202,6 @@ def usuario_existe(telefone: str) -> bool:
 def proximo_campo_faltante(dados: dict, telefone: str) -> str | None:
     if not usuario_existe(telefone) and not dados.get("nome"):
         return "nome"
-    if not dados.get("preco_alvo"):
-        return "preco_alvo"
     if "data_viagem" not in dados and "data_inicio" not in dados:
         return "data_viagem"
     if dados.get("data_fim") and not dados.get("duracao_min_noites"):
@@ -223,22 +216,22 @@ def finalizar_alerta(telefone: str, dados: dict, push_name: str | None) -> str:
         id_usuario = obter_ou_criar_usuario(engine, nome, telefone)
         ids = criar_alertas_em_lote(
             engine, id_usuario, dados["origem"], dados["destinos"],
-            data_viagem, float(dados["preco_alvo"]), confirmado=True,
+            data_viagem, confirmado=True,
             data_inicio=dados.get("data_inicio"), data_fim=dados.get("data_fim"),
             duracao_min_noites=dados.get("duracao_min_noites"),
         )
     except (LimiteDeAlertasAtingido, ValueError) as erro:
         return f"😕 {erro}"
     apagar_conversa(telefone)
-    preco_fmt = f"R$ {dados['preco_alvo']:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
     destinos_fmt = ", ".join(dados["destinos"])
     periodo = (
         f"entre {dados['data_inicio']} e {dados['data_fim']}, {dados['duracao_min_noites']}+ noites"
         if dados.get("data_fim") else data_viagem
     )
     return (
-        f"✅ {len(ids)} alerta(s) criado(s)! {dados['origem']} → {destinos_fmt} até {preco_fmt}.\n"
-        f"Período: {periodo}\n\nVou te avisar por aqui assim que o preço cair até esse valor."
+        f"✅ {len(ids)} rota(s) sendo acompanhada(s)! {dados['origem']} → {destinos_fmt}.\n"
+        f"Período: {periodo}\n\nVou te avisar por aqui sempre que o preço cair de verdade "
+        "(novo mínimo, bem abaixo da média, ou preço marcado como baixo pelo Google)."
     )
 
 
@@ -256,11 +249,6 @@ def continuar_conversa(telefone: str, conversa: dict, texto: str) -> str:
         if len(texto.strip()) < 2:
             return "Não entendi — qual seu nome?"
         dados["nome"] = texto.strip()
-    elif campo == "preco_alvo":
-        preco = parse_preco(texto)
-        if preco is None:
-            return "Não entendi o preço. Manda só o número, ex: 2000"
-        dados["preco_alvo"] = preco
     elif campo == "data_viagem":
         data_viagem = parse_data_viagem(texto)
         if data_viagem is not None:

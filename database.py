@@ -12,6 +12,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Table,
+    UniqueConstraint,
     create_engine,
     event,
 )
@@ -38,15 +39,20 @@ destinos = Table(
     Column("Pais", String, nullable=False),
 )
 
+# "Alertas" = monitoramentos de rota. Apesar do nome (histórico), não exige
+# mais preço-alvo: Preco_Alvo fica nula e serve só para quem ainda quer usar
+# a ideia antiga. IATA_Origem guarda uma ou mais origens separadas por
+# vírgula, sempre em ordem alfabética (ex.: "GIG,SDU") — por isso não tem
+# mais FK para Destinos nem tamanho fixo de 3 caracteres.
 alertas = Table(
     "Alertas",
     metadata,
     Column("ID_Alerta", Integer, primary_key=True, autoincrement=True),
     Column("ID_Usuario", Integer, ForeignKey("Usuarios.ID"), nullable=False),
-    Column("IATA_Origem", String(3), ForeignKey("Destinos.IATA"), nullable=False),
+    Column("IATA_Origem", String(64), nullable=False),
     Column("IATA_Destino", String(3), ForeignKey("Destinos.IATA"), nullable=False),
     Column("Mes_Viagem_Ou_Data", String, nullable=False),
-    Column("Preco_Alvo", Float, nullable=False),
+    Column("Preco_Alvo", Float),
     Column("Preco_Atual", Float),
     Column("Ultima_Verificacao", String),
     Column("Confirmado", Integer, nullable=False, server_default="1"),
@@ -54,8 +60,11 @@ alertas = Table(
     Column("Data_Inicio_Janela", String),
     Column("Data_Fim_Janela", String),
     Column("Duracao_Min_Noites", Integer),
+    Column("ID_Rota_Coleta", Integer, ForeignKey("Rotas_Coleta.ID_Rota", ondelete="SET NULL")),
 )
 
+# Mantida por compatibilidade com o histórico antigo (um alerta = uma rota).
+# Dados novos vão para Cotacoes, ligados a Rotas_Coleta.
 historico_precos = Table(
     "Historico_Precos",
     metadata,
@@ -78,6 +87,57 @@ conversas_bot = Table(
     Column("Dados", String),
     Column("Atualizado_Em", String, nullable=False),
 )
+
+# Uma rota de coleta é compartilhada por todos os monitoramentos que pedem a
+# mesma combinação de origens + destino + datas: a varredura diária consulta
+# a SerpApi uma vez por rota, não uma vez por pessoa.
+rotas_coleta = Table(
+    "Rotas_Coleta",
+    metadata,
+    Column("ID_Rota", Integer, primary_key=True, autoincrement=True),
+    Column("Origens", String(64), nullable=False),
+    Column("IATA_Destino", String(3), ForeignKey("Destinos.IATA"), nullable=False),
+    Column("Data_Ida", String, nullable=False),
+    Column("Data_Volta", String),
+    Column("Criado_Em", String, nullable=False),
+    UniqueConstraint("Origens", "IATA_Destino", "Data_Ida", "Data_Volta", name="uq_rota_coleta"),
+)
+
+# Cada linha é um preço observado para uma rota, num dia. "Fonte" distingue
+# o ponto coletado pela nossa varredura diária do histórico que o próprio
+# Google devolve numa consulta (preenche os ~60 dias anteriores de uma vez).
+cotacoes = Table(
+    "Cotacoes",
+    metadata,
+    Column("ID_Cotacao", Integer, primary_key=True, autoincrement=True),
+    Column("ID_Rota", Integer, ForeignKey("Rotas_Coleta.ID_Rota", ondelete="CASCADE"), nullable=False),
+    Column("Coletado_Em", String, nullable=False),
+    Column("Data_Referencia", String, nullable=False),  # AAAA-MM-DD, para agrupar por dia
+    Column("Preco", Float, nullable=False),
+    Column("Aeroporto_Saida", String(3)),
+    Column("Companhia", String),
+    Column("Escalas", Integer),
+    Column("Duracao_Min", Integer),
+    Column("Nivel_Google", String),
+    Column("Faixa_Tipica_Min", Float),
+    Column("Faixa_Tipica_Max", Float),
+    Column("Fonte", String, nullable=False),
+    UniqueConstraint("ID_Rota", "Data_Referencia", "Fonte", name="uq_cotacao_dia"),
+)
+Index("idx_cotacoes_rota_data", cotacoes.c.ID_Rota, cotacoes.c.Data_Referencia)
+
+# Registro de cada WhatsApp enviado, para não repetir o mesmo aviso no
+# mesmo dia e para auditar o que foi mandado.
+notificacoes = Table(
+    "Notificacoes",
+    metadata,
+    Column("ID_Notificacao", Integer, primary_key=True, autoincrement=True),
+    Column("ID_Alerta", Integer, ForeignKey("Alertas.ID_Alerta", ondelete="CASCADE"), nullable=False),
+    Column("Enviado_Em", String, nullable=False),
+    Column("Motivo", String, nullable=False),  # novo_minimo | abaixo_media | ficou_barato | resumo_semanal
+    Column("Preco", Float),
+)
+Index("idx_notificacoes_alerta_motivo_data", notificacoes.c.ID_Alerta, notificacoes.c.Motivo)
 
 
 def normalizar_database_url(database_url: str) -> str:

@@ -178,3 +178,22 @@ UFS_BRASIL = {
 AEROPORTOS = AEROPORTOS_BRASIL + [(iata, cidade, pais) for iata, cidade, pais, _ in DESTINOS_TOP20]
 
 NOMES = {iata: nome for iata, nome, _ in AEROPORTOS}
+
+
+def _grupos_origem_multi():
+    """Cidades brasileiras com mais de um aeroporto (Rio, São Paulo...),
+    para oferecer um atalho "selecione os dois de uma vez" no cadastro."""
+    por_cidade = {}
+    for iata, nome, uf in AEROPORTOS_BRASIL:
+        cidade = nome.split(" - ")[0]
+        por_cidade.setdefault((cidade, uf), []).append(iata)
+    grupos = []
+    for (cidade, uf), iatas in por_cidade.items():
+        if len(iatas) > 1:
+            iatas_ordenados = tuple(sorted(iatas))
+            rotulo = f"{cidade} - {uf} ({'+'.join(iatas_ordenados)})"
+            grupos.append((f"GRUPO:{'+'.join(iatas_ordenados)}", rotulo, iatas_ordenados))
+    return sorted(grupos, key=lambda g: g[1])
+
+
+GRUPOS_ORIGEM_MULTI = _grupos_origem_multi()

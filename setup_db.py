@@ -7,7 +7,9 @@ from database import destinos, get_engine, metadata
 
 
 def migrar_colunas_alertas(engine):
-    """Alertas criados antes desta versão não têm as colunas novas."""
+    """Alertas criados antes desta versão não têm as colunas novas, e a
+    coluna de origem precisa deixar de ter FK/tamanho fixo para caber mais
+    de um aeroporto (ex.: "GIG,SDU")."""
     colunas = {c["name"] for c in inspect(engine).get_columns("Alertas")}
     comandos = {
         "Confirmado": 'ALTER TABLE "Alertas" ADD COLUMN "Confirmado" INTEGER NOT NULL DEFAULT 1',
@@ -15,17 +17,34 @@ def migrar_colunas_alertas(engine):
         "Data_Inicio_Janela": 'ALTER TABLE "Alertas" ADD COLUMN "Data_Inicio_Janela" VARCHAR',
         "Data_Fim_Janela": 'ALTER TABLE "Alertas" ADD COLUMN "Data_Fim_Janela" VARCHAR',
         "Duracao_Min_Noites": 'ALTER TABLE "Alertas" ADD COLUMN "Duracao_Min_Noites" INTEGER',
+        "ID_Rota_Coleta": 'ALTER TABLE "Alertas" ADD COLUMN "ID_Rota_Coleta" INTEGER',
     }
     with engine.begin() as connection:
         for nome_coluna, comando in comandos.items():
             if nome_coluna not in colunas:
                 connection.execute(text(comando))
 
+        if engine.dialect.name == "postgresql":
+            # Preco_Alvo não é mais obrigatório; IATA_Origem precisa caber
+            # várias origens e não tem mais FK fixa para Destinos.
+            connection.execute(text('ALTER TABLE "Alertas" ALTER COLUMN "Preco_Alvo" DROP NOT NULL'))
+            connection.execute(text('ALTER TABLE "Alertas" ALTER COLUMN "IATA_Origem" TYPE VARCHAR(64)'))
+            fks = connection.execute(text("""
+                SELECT constraint_name FROM information_schema.table_constraints
+                WHERE table_name = 'Alertas' AND constraint_type = 'FOREIGN KEY'
+                  AND constraint_name LIKE '%iata_origem%'
+            """)).scalars().all()
+            for nome in fks:
+                connection.execute(text(f'ALTER TABLE "Alertas" DROP CONSTRAINT "{nome}"'))
+
 
 def setup_database(engine=None):
     engine = engine or get_engine()
+    inspetor_antes = inspect(engine)
+    tinha_alertas = inspetor_antes.has_table("Alertas")
+
     metadata.create_all(engine)
-    if inspect(engine).has_table("Alertas"):
+    if tinha_alertas:
         migrar_colunas_alertas(engine)
 
     registros_destinos = [
