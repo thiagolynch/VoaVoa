@@ -13,14 +13,27 @@ from loguru import logger
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://127.0.0.1:8080").rstrip("/")
-EVOLUTION_INSTANCE_NAME = os.getenv("EVOLUTION_INSTANCE_NAME", "voavoa")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")
+
+def _configuracao(nome: str, padrao: str = "") -> str:
+    """Lê configuração local ou os Secrets do Streamlit Community Cloud."""
+    valor = os.getenv(nome)
+    if valor:
+        return valor
+    try:
+        import streamlit as st
+        valor = st.secrets.get(nome)
+    except Exception:
+        valor = None
+    return str(valor) if valor else padrao
+
+
+EVOLUTION_API_URL = _configuracao("EVOLUTION_API_URL", "http://127.0.0.1:8080").rstrip("/")
+EVOLUTION_INSTANCE_NAME = _configuracao("EVOLUTION_INSTANCE_NAME", "voavoa")
+EVOLUTION_API_KEY = _configuracao("EVOLUTION_API_KEY")
 
 
 def whatsapp_configurado() -> bool:
-    """Falso quando falta a chave ou quando rodamos na nuvem (GitHub Actions)
-    apontando para localhost — lá o Docker do seu PC não é alcançável."""
+    """Indica se há dados suficientes para tentar falar com a Evolution API."""
     if not EVOLUTION_API_KEY:
         return False
     host = urlparse(EVOLUTION_API_URL).hostname or ""

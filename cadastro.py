@@ -160,16 +160,25 @@ if enviado:
                 f"entre {data_inicio.isoformat()} e {data_fim.isoformat()}, {duracao_min_noites}+ noites"
                 if flexivel else data_viagem.isoformat()
             )
-            if whatsapp_configurado():
-                enviar_alerta_whatsapp(
-                    telefone,
-                    f"✈️ *VOAVOA*\n\nRecebemos seu pedido: acompanhar {origens_fmt} → {destinos_fmt}.\n"
-                    f"Período: {periodo}\n\n"
-                    "Responda *CONFIRMAR* nesta conversa para ativar o acompanhamento. "
-                    "Em algumas horas você já recebe no WhatsApp a confirmação e, dali em diante, "
-                    "um aviso sempre que o preço cair de verdade.",
-                )
-            st.success(
-                f"Pedido recebido ({len(ids)} rota(s))! Confira seu WhatsApp: mandamos um pedido de "
-                "confirmação. O acompanhamento só começa depois que você responder CONFIRMAR por lá."
+            mensagem_confirmacao = (
+                f"✈️ *VOAVOA*\n\nRecebemos seu pedido: acompanhar {origens_fmt} → {destinos_fmt}.\n"
+                f"Período: {periodo}\n\n"
+                "Responda *CONFIRMAR* nesta conversa para ativar o acompanhamento. "
+                "Em algumas horas você já recebe no WhatsApp a confirmação e, dali em diante, "
+                "um aviso sempre que o preço cair de verdade."
             )
+            mensagem_enviada = whatsapp_configurado() and enviar_alerta_whatsapp(
+                telefone,
+                mensagem_confirmacao,
+            )
+            if mensagem_enviada:
+                st.success(
+                    f"Pedido recebido ({len(ids)} rota(s))! Confira seu WhatsApp: mandamos um pedido de "
+                    "confirmação. O acompanhamento só começa depois que você responder CONFIRMAR por lá."
+                )
+            else:
+                st.warning(
+                    f"Pedido salvo ({len(ids)} rota(s)), mas não conseguimos enviar a confirmação pelo "
+                    "WhatsApp agora. Seu acompanhamento continua pendente. Tente enviar o formulário "
+                    "novamente mais tarde."
+                )

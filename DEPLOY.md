@@ -88,7 +88,7 @@ A URL local `http://127.0.0.1:8080` não funciona a partir do GitHub Actions. A 
 
 ### Formulário (`cadastro.py`)
 
-Mesmo processo do passo 3, só que num **segundo app** do Streamlit Community Cloud, apontando pro arquivo `cadastro.py`, com os mesmos secrets de `DATABASE_URL` (não precisa de `SERPAPI_KEY` nem Evolution). Diferente do `dashboard.py`, deixe o **Sharing** desse app como público — é pra qualquer visitante usar. A URL gerada vai no `site/config.js` (`cadastroUrl`), pra aparecer o botão "Cadastrar alerta" na vitrine.
+Mesmo processo do passo 3, só que num **segundo app** do Streamlit Community Cloud, apontando pro arquivo `cadastro.py`. Configure `DATABASE_URL`, `EVOLUTION_API_URL`, `EVOLUTION_INSTANCE_NAME` e `EVOLUTION_API_KEY` nos Secrets desse app; `SERPAPI_KEY` não é necessária. A `EVOLUTION_API_URL` precisa ser uma URL pública HTTPS: `127.0.0.1` e `localhost` apontam para o próprio servidor do Streamlit e não chegam ao Docker do seu computador. Diferente do `dashboard.py`, deixe o **Sharing** desse app como público — é pra qualquer visitante usar. A URL gerada vai no `site/config.js` (`cadastroUrl`), pra aparecer o botão "Cadastrar alerta" na vitrine.
 
 ### Bot de WhatsApp (`whatsapp_bot.py`)
 
