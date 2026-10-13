@@ -159,7 +159,7 @@ footer p{max-width:72ch;margin:0 0 10px}
 
 <script src="config.js"></script>
 <script>
-const CFG = Object.assign({ whatsapp: "" }, window.VOAVOA_CONFIG || {});
+const CFG = Object.assign({ whatsapp: "", cadastroUrl: "" }, window.VOAVOA_CONFIG || {});
 const brl = v => v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 const dt = s => new Date(s + (s.length === 10 ? "T12:00:00" : "")).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 const flag = cc => cc ? cc.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt())) : "";
@@ -245,6 +245,8 @@ function rowHTML(r) {
   const s = r.stats_30d || {};
   const wa = CFG.whatsapp && r.preco_atual != null
     ? `<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Quero receber alerta de preço no WhatsApp para ${r.origem_nome} (${r.origem}) → ${r.destino_nome} (${r.destino}). Meu preço-alvo é R$ `)}">Quero alerta no WhatsApp</a>` : "";
+  const cadastro = CFG.cadastroUrl && r.preco_atual != null
+    ? `<a class="btn ghost" target="_blank" rel="noopener" href="${CFG.cadastroUrl}?origem=${esc(r.origem)}&destino=${esc(r.destino)}">Cadastrar alerta</a>` : "";
   const facts = r.preco_atual == null ? "" : `<div class="facts">
       <span>Ida <b>${dt(r.data_ida)}</b>, volta <b>${dt(r.data_volta)}</b></span>
       ${r.companhia ? `<span>Companhia <b>${esc(r.companhia)}</b></span>` : ""}
@@ -272,6 +274,7 @@ function rowHTML(r) {
       ${facts}
       <div class="actions">
         <a class="btn primary" target="_blank" rel="noopener" href="${esc(r.google_flights_url)}">Ver voos no Google Flights</a>
+        ${cadastro}
         ${wa}
       </div>`}
     </div>

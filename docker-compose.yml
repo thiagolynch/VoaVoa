@@ -64,6 +64,25 @@ services:
     networks:
       - voavoa-net
 
+  # ─── Bot de WhatsApp (webhook da Evolution API) ─────────────────
+  whatsapp-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    container_name: voavoa-whatsapp-bot
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:5050:5000"
+    depends_on:
+      - evolution-api
+    networks:
+      - voavoa-net
+
 # ─── Volumes persistentes ───────────────────────────────────────
 volumes:
   postgres_data:

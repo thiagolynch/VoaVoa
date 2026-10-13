@@ -6,12 +6,14 @@ e envia WhatsApp quando o preço fica igual ou abaixo do preço-alvo.
 
 Uso:  python motor_busca.py
 """
+import os
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from loguru import logger
 from sqlalchemy import text
 
+from alertas_repo import limpar_alertas_nao_confirmados, normalizar_data
 from database import get_engine
 from google_flights import buscar_voo
 from setup_db import setup_database
@@ -42,17 +44,39 @@ def formatar_reais(valor: float) -> str:
     return f"R$ {valor:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
 
 
-def normalizar_data(valor: str) -> str:
-    """Aceita AAAA-MM (usa o dia 15) ou AAAA-MM-DD."""
-    return valor if len(valor) == 10 else f"{valor}-15"
-
-
 def deve_notificar(preco: float, alvo: float, preco_anterior: float | None) -> bool:
     """Avisa quando cruza a meta ou quando bate um novo mínimo abaixo da meta
     (evita mandar a mesma mensagem todo dia)."""
     if preco > alvo:
         return False
     return preco_anterior is None or preco_anterior > alvo or preco < preco_anterior
+
+
+def buscar_melhor_preco_na_janela(origem: str, destino: str, data_inicio: str,
+                                    data_fim: str, duracao_min_noites: int):
+    """Amostra datas de ida dentro da janela (passo JANELA_AMOSTRAGEM_DIAS,
+    sempre incluindo as duas pontas) e devolve o menor preço encontrado,
+    com a ida/volta correspondentes. None se nenhuma amostra respondeu."""
+    passo = int(os.getenv("JANELA_AMOSTRAGEM_DIAS", "3"))
+    inicio, fim = date.fromisoformat(data_inicio), date.fromisoformat(data_fim)
+
+    candidatas = []
+    atual = inicio
+    while atual < fim:
+        candidatas.append(atual)
+        atual += timedelta(days=passo)
+    candidatas.append(fim)
+
+    melhor, melhor_ida, melhor_volta = None, None, None
+    for ida in candidatas:
+        volta = ida + timedelta(days=duracao_min_noites)
+        resultado = buscar_voo(origem, destino, ida.isoformat(), volta.isoformat())
+        if resultado and (melhor is None or resultado.preco < melhor.preco):
+            melhor, melhor_ida, melhor_volta = resultado, ida, volta
+
+    if melhor is None:
+        return None
+    return melhor, melhor_ida.isoformat(), melhor_volta.isoformat()
 
 
 def gravar_historico(connection, id_alerta: int, preco: float, agora: str, historico_google):
@@ -86,17 +110,21 @@ def verificar_alertas():
 
     engine = get_engine()
     setup_database(engine)
+    removidos = limpar_alertas_nao_confirmados(engine)
+    if removidos:
+        logger.info(f"🧹 {removidos} pedido(s) de alerta nunca confirmado(s) removido(s).")
     with engine.connect() as connection:
         alertas = connection.execute(text("""
             SELECT a."ID_Alerta", u."Nome" AS "Nome_Usuario", u."Telefone_WhatsApp",
                    a."IATA_Origem", a."IATA_Destino", a."Mes_Viagem_Ou_Data",
                    a."Preco_Alvo", a."Preco_Atual",
+                   a."Data_Inicio_Janela", a."Data_Fim_Janela", a."Duracao_Min_Noites",
                    o."Nome_Cidade" AS "Cidade_Origem", d."Nome_Cidade" AS "Cidade_Destino"
             FROM "Alertas" a
             JOIN "Usuarios" u ON a."ID_Usuario" = u."ID"
             JOIN "Destinos" o ON a."IATA_Origem" = o."IATA"
             JOIN "Destinos" d ON a."IATA_Destino" = d."IATA"
-            WHERE u."Opt_in" = 1
+            WHERE u."Opt_in" = 1 AND a."Confirmado" = 1
             ORDER BY a."ID_Alerta"
         """)).mappings().all()
 
@@ -111,18 +139,38 @@ def verificar_alertas():
     for alerta in alertas:
         id_alerta = alerta["ID_Alerta"]
         origem, destino = alerta["IATA_Origem"], alerta["IATA_Destino"]
-        data_viagem = normalizar_data(alerta["Mes_Viagem_Ou_Data"])
         alvo = alerta["Preco_Alvo"]
+        data_fim_janela = alerta["Data_Fim_Janela"]
+        modo_janela = bool(data_fim_janela) and data_fim_janela != alerta["Data_Inicio_Janela"]
 
-        if data_viagem < date.today().isoformat():
-            logger.warning(f"Alerta #{id_alerta}: data {data_viagem} já passou — ignorado.")
-            continue
-
-        logger.info(f"Alerta #{id_alerta} | {origem} ➔ {destino} | {data_viagem} | alvo {formatar_reais(alvo)}")
-        resultado = buscar_voo(origem, destino, data_viagem)
-        if resultado is None:
-            logger.error(f"Sem preço para o alerta #{id_alerta}.")
-            continue
+        if modo_janela:
+            if data_fim_janela < date.today().isoformat():
+                logger.warning(f"Alerta #{id_alerta}: janela até {data_fim_janela} já passou — ignorado.")
+                continue
+            data_inicio_janela = max(alerta["Data_Inicio_Janela"], date.today().isoformat())
+            logger.info(
+                f"Alerta #{id_alerta} | {origem} ➔ {destino} | janela {data_inicio_janela} a "
+                f"{data_fim_janela}, {alerta['Duracao_Min_Noites']}+ noites | alvo {formatar_reais(alvo)}"
+            )
+            achado = buscar_melhor_preco_na_janela(
+                origem, destino, data_inicio_janela, data_fim_janela, alerta["Duracao_Min_Noites"]
+            )
+            if achado is None:
+                logger.error(f"Sem preço para o alerta #{id_alerta}.")
+                continue
+            resultado, data_ida, data_volta = achado
+            texto_data = f"{datetime.fromisoformat(data_ida).strftime('%d/%m/%Y')} a {datetime.fromisoformat(data_volta).strftime('%d/%m/%Y')}"
+        else:
+            data_viagem = normalizar_data(alerta["Mes_Viagem_Ou_Data"])
+            if data_viagem < date.today().isoformat():
+                logger.warning(f"Alerta #{id_alerta}: data {data_viagem} já passou — ignorado.")
+                continue
+            logger.info(f"Alerta #{id_alerta} | {origem} ➔ {destino} | {data_viagem} | alvo {formatar_reais(alvo)}")
+            resultado = buscar_voo(origem, destino, data_viagem)
+            if resultado is None:
+                logger.error(f"Sem preço para o alerta #{id_alerta}.")
+                continue
+            texto_data = datetime.fromisoformat(data_viagem).strftime('%d/%m/%Y')
 
         agora = datetime.now().isoformat(timespec="seconds")
         with engine.begin() as connection:
@@ -138,7 +186,7 @@ def verificar_alertas():
             f"Olá, *{alerta['Nome_Usuario']}*! Encontramos uma oferta:\n\n"
             f"🛫 *Origem:* {alerta['Cidade_Origem']} ({origem})\n"
             f"🛬 *Destino:* {alerta['Cidade_Destino']} ({destino})\n"
-            f"📅 *Data:* {datetime.fromisoformat(data_viagem).strftime('%d/%m/%Y')}\n"
+            f"📅 *Data:* {texto_data}\n"
             f"🎯 *Seu alvo:* {formatar_reais(alvo)}\n"
             f"💰 *Preço agora:* {formatar_reais(resultado.preco)}\n"
             + (f"📊 *Nível do preço (Google):* {nivel}\n" if nivel else "")

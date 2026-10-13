@@ -10,6 +10,8 @@ Acompanha o preço das passagens para os 20 destinos internacionais mais procura
 | Atualizador da página | `vitrine.py` | Consulta o Google Flights (via SerpApi) para as rotas *origens × 20 destinos* e grava o JSON. |
 | Alertas | `motor_busca.py` | Lê os alertas do banco, grava histórico e envia WhatsApp pela Evolution API. |
 | Painel admin | `dashboard.py` | Streamlit para cadastrar usuários/alertas e ver gráficos. |
+| Cadastro público | `cadastro.py` | Streamlit público (sem login): qualquer pessoa cria o próprio alerta — vários destinos, data única ou janela flexível. Alerta nasce pendente até confirmar por WhatsApp. |
+| Bot de WhatsApp | `whatsapp_bot.py` | Recebe webhooks da Evolution API e conduz uma conversa guiada pra criar alertas direto pelo WhatsApp, ou confirmar os pendentes do `cadastro.py`. |
 | Robô diário | `.github/workflows/price-scan.yml` | Roda tudo todo dia às 07h17 (Brasília), salva os preços e publica a página. |
 
 Cada consulta à SerpApi já devolve o **histórico de ~60 dias do Google** (`price_insights`), o nível do preço (baixo / normal / alto) e a faixa típica. Por isso a estatística de 30 dias fica correta desde a primeira consulta, e dá para atualizar cada rota só uma vez por semana, economizando cota.

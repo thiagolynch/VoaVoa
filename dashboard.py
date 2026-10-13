@@ -1,14 +1,19 @@
 import os
-import re
 from datetime import date, datetime, timedelta
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
 
 from aeroportos import AEROPORTOS
+from alertas_repo import (
+    LimiteDeAlertasAtingido,
+    criar_alertas_em_lote,
+    janela_valida,
+    obter_ou_criar_usuario,
+    telefone_valido,
+)
 from database import get_engine
 from setup_db import setup_database
 
@@ -44,12 +49,13 @@ def carregar_alertas_ativos():
             SELECT a."ID_Alerta", a."ID_Usuario", u."Nome" AS "Nome_Usuario",
                    a."IATA_Origem", a."IATA_Destino", a."Mes_Viagem_Ou_Data",
                    a."Preco_Alvo", a."Preco_Atual", a."Ultima_Verificacao",
+                   a."Data_Inicio_Janela", a."Data_Fim_Janela", a."Duracao_Min_Noites",
                    o."Nome_Cidade" AS "Cidade_Origem", d."Nome_Cidade" AS "Cidade_Destino"
             FROM "Alertas" a
             JOIN "Usuarios" u ON u."ID" = a."ID_Usuario"
             JOIN "Destinos" o ON a."IATA_Origem" = o."IATA"
             JOIN "Destinos" d ON a."IATA_Destino" = d."IATA"
-            WHERE u."Opt_in" = 1
+            WHERE u."Opt_in" = 1 AND a."Confirmado" = 1
             ORDER BY a."ID_Alerta" DESC
         """)).mappings().all()
 
@@ -80,9 +86,16 @@ def aba_monitoramento():
     for alerta in alertas:
         rota = f"{alerta['IATA_Origem']} → {alerta['IATA_Destino']}"
         st.markdown(f"#### {rota} · {alerta['Nome_Usuario']}")
+        if alerta["Data_Fim_Janela"] and alerta["Data_Fim_Janela"] != alerta["Data_Inicio_Janela"]:
+            viagem = (
+                f"{alerta['Data_Inicio_Janela']} a {alerta['Data_Fim_Janela']} "
+                f"({alerta['Duracao_Min_Noites']}+ noites)"
+            )
+        else:
+            viagem = alerta["Mes_Viagem_Ou_Data"]
         st.caption(
             f"{alerta['Cidade_Origem']} para {alerta['Cidade_Destino']} · "
-            f"Viagem: {alerta['Mes_Viagem_Ou_Data']} · "
+            f"Viagem: {viagem} · "
             f"Meta: {formatar_reais(alerta['Preco_Alvo'])}"
         )
 
@@ -136,19 +149,12 @@ def cadastrar_usuario():
         telefone = telefone.strip()
         if not nome:
             st.error("Informe o nome do usuário.")
-        elif not re.fullmatch(r"\+\d{8,15}", telefone):
+        elif not telefone_valido(telefone):
             st.error("Use o telefone internacional com + e DDI, por exemplo +5511999998888.")
         else:
-            try:
-                with obter_engine().begin() as connection:
-                    connection.execute(text(
-                        'INSERT INTO "Usuarios" ("Nome", "Telefone_WhatsApp") '
-                        'VALUES (:nome, :telefone)'
-                    ), {"nome": nome, "telefone": telefone})
-                st.success("Usuário cadastrado.")
-                st.rerun()
-            except IntegrityError:
-                st.error("Esse telefone já está cadastrado.")
+            obter_ou_criar_usuario(obter_engine(), nome, telefone)
+            st.success("Usuário cadastrado (ou já existia com esse telefone).")
+            st.rerun()
 
 
 def cadastrar_alerta():
@@ -164,40 +170,53 @@ def cadastrar_alerta():
 
     ids_usuarios = [usuario["ID"] for usuario in usuarios]
     aeroportos = [aeroporto[0] for aeroporto in AEROPORTOS]
+    flexivel = st.checkbox("Data flexível (período em vez de uma data única)", key="flex_dashboard")
+
     with st.form("form_alerta", clear_on_submit=True):
         id_usuario = st.selectbox(
             "Usuário",
             ids_usuarios,
             format_func=lambda valor: next(u["Nome"] for u in usuarios if u["ID"] == valor),
         )
-        coluna_origem, coluna_destino = st.columns(2)
-        origem = coluna_origem.selectbox("Origem", aeroportos, format_func=formatar_aeroporto)
-        destino = coluna_destino.selectbox(
-            "Destino", aeroportos, index=aeroportos.index("MIA"), format_func=formatar_aeroporto
+        origem = st.selectbox("Origem", aeroportos, format_func=formatar_aeroporto)
+        destinos = st.multiselect(
+            "Destino(s)", aeroportos, default=["MIA"], format_func=formatar_aeroporto
         )
-        coluna_data, coluna_preco = st.columns(2)
-        data_viagem = coluna_data.date_input("Data da viagem", value=date.today() + timedelta(days=30))
-        preco_alvo = coluna_preco.number_input("Preço alvo (R$)", min_value=1.0, value=1000.0, step=50.0)
+
+        if not flexivel:
+            data_viagem = st.date_input("Data da viagem", value=date.today() + timedelta(days=30))
+            data_inicio = data_fim = duracao_min_noites = None
+        else:
+            coluna_inicio, coluna_fim, coluna_noites = st.columns(3)
+            data_inicio = coluna_inicio.date_input("Início do período", value=date.today() + timedelta(days=30))
+            data_fim = coluna_fim.date_input("Fim do período", value=date.today() + timedelta(days=40))
+            duracao_min_noites = coluna_noites.number_input("Noites mínimas", min_value=1, value=5, step=1)
+            data_viagem = None
+
+        preco_alvo = st.number_input("Preço alvo (R$)", min_value=1.0, value=1000.0, step=50.0)
         enviado = st.form_submit_button("Criar alerta", type="primary", use_container_width=True)
 
     if enviado:
-        if origem == destino:
+        if not destinos:
+            st.error("Selecione pelo menos um destino.")
+        elif origem in destinos:
             st.error("Origem e destino precisam ser diferentes.")
+        elif flexivel and not janela_valida(data_inicio, data_fim):
+            st.error("Esse período não é válido ou é grande demais.")
         else:
-            with obter_engine().begin() as connection:
-                connection.execute(text("""
-                    INSERT INTO "Alertas"
-                        ("ID_Usuario", "IATA_Origem", "IATA_Destino", "Mes_Viagem_Ou_Data", "Preco_Alvo")
-                    VALUES (:id_usuario, :origem, :destino, :data_viagem, :preco_alvo)
-                """), {
-                    "id_usuario": id_usuario,
-                    "origem": origem,
-                    "destino": destino,
-                    "data_viagem": data_viagem.isoformat(),
-                    "preco_alvo": preco_alvo,
-                })
-            st.success("Alerta criado.")
-            st.rerun()
+            try:
+                ids = criar_alertas_em_lote(
+                    obter_engine(), id_usuario, origem, destinos,
+                    (data_viagem or data_inicio).isoformat(), preco_alvo, confirmado=True,
+                    data_inicio=data_inicio.isoformat() if flexivel else None,
+                    data_fim=data_fim.isoformat() if flexivel else None,
+                    duracao_min_noites=int(duracao_min_noites) if flexivel else None,
+                )
+            except (LimiteDeAlertasAtingido, ValueError) as erro:
+                st.error(str(erro))
+            else:
+                st.success(f"{len(ids)} alerta(s) criado(s).")
+                st.rerun()
 
 
 def aba_gestao():
