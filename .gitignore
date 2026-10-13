@@ -19,3 +19,6 @@ venv/
 # Local WhatsApp QR session
 qrcode.html
 qrcode.png
+
+# Claude Code local state
+.claude/
