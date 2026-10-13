@@ -315,7 +315,11 @@ def saude():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     payload = request.get_json(silent=True) or {}
-    for mensagem in extrair_mensagens(payload):
+    logger.debug(f"Webhook recebido: {json.dumps(payload)[:2000]}")
+    mensagens = list(extrair_mensagens(payload))
+    if not mensagens:
+        logger.warning("Nenhuma mensagem reconhecida nesse payload.")
+    for mensagem in mensagens:
         chave = mensagem.get("key") or {}
         remote_jid = chave.get("remoteJid") or ""
         if chave.get("fromMe") or not remote_jid or remote_jid.endswith("@g.us"):
