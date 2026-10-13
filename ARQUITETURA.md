@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral
 
-O VOAVOA consulta preços de voos pelo **Google Flights via SerpApi** (não faz web scraping) e usa isso para duas coisas: publicar uma **vitrine pública estática** com os 20 destinos internacionais mais procurados, e **avisar por WhatsApp** quando um alerta cadastrado por um usuário atinge o preço-alvo.
+O VOAVOA consulta preços de voos pelo **Google Flights via SerpApi** (não faz web scraping) e usa isso para duas coisas: publicar uma **vitrine pública estática** com os 20 destinos internacionais mais procurados, e **avisar por WhatsApp** quando o preço de uma rota acompanhada cai de verdade (novo mínimo histórico, bem abaixo da média de 30 dias, ou o Google marca como preço baixo) — sem precisar de um preço-alvo definido pelo usuário.
 
 ```
                          ┌────────────────────────┐

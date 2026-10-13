@@ -244,7 +244,7 @@ function rowHTML(r) {
   const open = state.open === r.id;
   const s = r.stats_30d || {};
   const wa = CFG.whatsapp && r.preco_atual != null
-    ? `<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Quero receber alerta de preço no WhatsApp para ${r.origem_nome} (${r.origem}) → ${r.destino_nome} (${r.destino}). Meu preço-alvo é R$ `)}">Quero alerta no WhatsApp</a>` : "";
+    ? `<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Quero acompanhar o preço de ${r.origem_nome} (${r.origem}) → ${r.destino_nome} (${r.destino}) e receber um aviso no WhatsApp quando cair de verdade.`)}">Quero alerta no WhatsApp</a>` : "";
   const cadastro = CFG.cadastroUrl && r.preco_atual != null
     ? `<a class="btn ghost" target="_blank" rel="noopener" href="${CFG.cadastroUrl}?origem=${esc(r.origem)}&destino=${esc(r.destino)}">Cadastrar alerta</a>` : "";
   const facts = r.preco_atual == null ? "" : `<div class="facts">

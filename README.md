@@ -1,80 +1,78 @@
 # VOAVOA ✈️
 
-Acompanha o preço das passagens para os 20 destinos internacionais mais procurados por brasileiros, mostra **menor, maior e média dos últimos 30 dias** numa página pública e manda **alerta no WhatsApp** quando o preço chega no valor desejado.
+**Pare de ficar checando preço de passagem manualmente.** O VOAVOA acompanha o preço das rotas que importam pra você — ou já publica os 20 destinos internacionais mais buscados por brasileiros — e avisa no WhatsApp quando o preço cai de verdade, comparado com o histórico real daquela rota.
+
+🔗 **Demo ao vivo:** [voavoa1.streamlit.app](https://voavoa1.streamlit.app/)
+
+![Status](https://img.shields.io/badge/status-em%20produção-1C7C54)
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/streamlit-painel%20%26%20cadastro-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+## Por que o VOAVOA é diferente
+
+A maioria dos comparadores mostra o preço de hoje e para por aí. O VOAVOA guarda **o histórico de preço de cada rota desde o primeiro dia em que alguém passou a acompanhá-la**, e só manda mensagem quando o preço:
+
+- bate o **menor valor já visto** para aquela rota,
+- fica **bem abaixo da média** dos últimos 30 dias, ou
+- o próprio Google passa a marcar como **"preço baixo"**.
+
+Sem "digite seu preço-alvo e torça": o sistema decide quando vale avisar, usando dado real de variação de preço.
+
+Outros diferenciais:
+- **Múltiplas origens num só alerta** — mora no Rio? Acompanhe GIG e SDU ao mesmo tempo, sem duplicar cadastro.
+- **Uma coleta serve todo mundo** — se duas pessoas pedem a mesma rota, só uma consulta é feita e os dois recebem o resultado (economiza cota de API).
+- **Vitrine pública** com os 20 destinos mais buscados do Brasil, sem precisar de login.
+- **Confirmação por WhatsApp** antes de qualquer alerta entrar no ar, pra ninguém cadastrar o número de outra pessoa.
 
 ## Como funciona
 
 | Peça | Arquivo | O que faz |
 |---|---|---|
-| Página pública | `site/` | HTML estático que lê `site/data/precos.json`. Publica no GitHub Pages ou Cloudflare Pages. |
-| Atualizador da página | `vitrine.py` | Consulta o Google Flights (via SerpApi) para as rotas *origens × 20 destinos* e grava o JSON. |
-| Alertas | `motor_busca.py` | Lê os alertas do banco, grava histórico e envia WhatsApp pela Evolution API. |
-| Painel admin | `dashboard.py` | Streamlit para cadastrar usuários/alertas e ver gráficos. |
-| Cadastro público | `cadastro.py` | Streamlit público (sem login): qualquer pessoa cria o próprio alerta — vários destinos, data única ou janela flexível. Alerta nasce pendente até confirmar por WhatsApp. |
-| Bot de WhatsApp | `whatsapp_bot.py` | Recebe webhooks da Evolution API e conduz uma conversa guiada pra criar alertas direto pelo WhatsApp, ou confirmar os pendentes do `cadastro.py`. |
-| Robô diário | `.github/workflows/price-scan.yml` | Roda tudo todo dia às 07h17 (Brasília), salva os preços e publica a página. |
+| Vitrine pública | `site/` | Página estática (HTML/CSS/JS puro) com os 20 destinos mais buscados. Publica no GitHub Pages ou Cloudflare Pages. |
+| Painel administrativo | `dashboard.py` | Streamlit: cadastro de usuários/alertas, acompanhamento (menor/maior/média desde o início) e análise de variação de preço com exportação em CSV. |
+| Cadastro público | `cadastro.py` | Streamlit sem login: qualquer pessoa cria o próprio acompanhamento — múltiplas origens e destinos, data única ou janela flexível. Nasce pendente até confirmar no WhatsApp. |
+| Bot de WhatsApp | `whatsapp_bot.py` | Conversa guiada que cria ou confirma acompanhamentos direto pelo WhatsApp. |
+| Motor de coleta | `coleta_diaria.py` | Roda todo dia: consulta o Google Flights (via SerpApi), grava o preço no banco, decide se há motivo pra avisar e dispara o WhatsApp. |
+| Robô agendado | `.github/workflows/price-scan.yml` | Roda a coleta na nuvem (GitHub Actions, grátis) todo dia às 07h17 (Brasília) — **não depende do seu computador estar ligado**. |
 
-Cada consulta à SerpApi já devolve o **histórico de ~60 dias do Google** (`price_insights`), o nível do preço (baixo / normal / alto) e a faixa típica. Por isso a estatística de 30 dias fica correta desde a primeira consulta, e dá para atualizar cada rota só uma vez por semana, economizando cota.
+Cada consulta à SerpApi já devolve o **histórico de ~60 dias do Google**, o nível do preço (baixo/normal/alto) e a faixa típica — por isso a série de 30 dias fica correta desde a primeira consulta.
 
-## Rodar no seu PC (Windows / VS Code)
+## Stack
 
-```powershell
+Python 3.11+ · Streamlit · SQLAlchemy (SQLite local / PostgreSQL via Supabase em produção) · SerpApi (Google Flights, sem scraping) · Evolution API (WhatsApp) · GitHub Actions · GitHub Pages / Cloudflare Pages.
+
+Arquitetura detalhada em [ARQUITETURA.md](ARQUITETURA.md). Passo a passo de deploy completo em [DEPLOY.md](DEPLOY.md).
+
+## Rodar localmente
+
+```bash
 python -m venv venv
-venv\Scripts\activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env      # depois preencha SERPAPI_KEY etc.
+cp .env.example .env            # preencha SERPAPI_KEY e demais variáveis
 python setup_db.py
-python vitrine.py           # atualiza site/data/precos.json
-python motor_busca.py       # verifica alertas
-streamlit run dashboard.py  # painel admin
+streamlit run cadastro.py       # formulário público
+streamlit run dashboard.py      # painel administrativo
+python coleta_diaria.py         # roda a coleta/alertas uma vez
 ```
 
-Para ver a página localmente: `python -m http.server 8000 --directory site` e abra http://localhost:8000.
-Enquanto `precos.json` não tiver preços, a página mostra **dados de demonstração** (`site/data/demo.json`) com um aviso.
+Para ver a vitrine pública localmente: `python -m http.server 8000 --directory site` e abra `http://localhost:8000`.
 
-## Publicar no GitHub
+Quer contribuir ou testar o fluxo completo (inclusive WhatsApp)? Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
-1. Crie um repositório **público** em https://github.com/new (ex.: `voavoa`), sem README.
-2. No terminal do VS Code, dentro da pasta VOAVOA:
-   ```powershell
-   git init
-   git add .
-   git status          # confira: .env, voavoa.db, venv e qrcode NÃO podem aparecer
-   git commit -m "VOAVOA: primeira versão"
-   git branch -M main
-   git remote add origin https://github.com/thiagolynch/voavoa.git
-   git push -u origin main
-   ```
-3. **Settings → Secrets and variables → Actions → New repository secret**:
-   - `SERPAPI_KEY` (obrigatório)
-   - `DATABASE_URL` (opcional: URL do Supabase — sem ele o robô só atualiza a página, sem alertas)
-   - `EVOLUTION_API_URL`, `EVOLUTION_INSTANCE_NAME`, `EVOLUTION_API_KEY` (opcional, ver WhatsApp abaixo)
-4. (Opcional) Aba **Variables**: `VITRINE_ORIGENS` (ex.: `GRU,GIG,BSB`) e `VITRINE_BUSCAS_POR_EXECUCAO`.
-5. **Settings → Pages → Source: GitHub Actions**.
-6. **Actions → Varredura diária de preços → Run workflow** para rodar a primeira vez.
-   A página fica em `https://thiagolynch.github.io/voavoa/`.
+## Roadmap
 
-### Ou no Cloudflare Pages
+- [ ] WhatsApp sem depender de computador local (hospedar a Evolution API ou migrar para a WhatsApp Cloud API da Meta)
+- [ ] Plano gratuito com limite de acompanhamentos + plano pago sem limite
+- [ ] Notificação por e-mail como alternativa ao WhatsApp
+- [ ] Mais destinos nacionais e internacionais na vitrine pública
 
-Cloudflare → Workers & Pages → Create → Pages → *Connect to Git* → escolha o repositório.
-Build command: *(vazio)* · Build output directory: `site`. Cada commit do robô republica sozinho.
-
-## Cota da SerpApi
-
-Conta: *rotas consultadas por dia × 30*. Padrão = 6 por dia ≈ 180/mês, e cada uma das 40 rotas (GRU e GIG × 20) é atualizada a cada ~7 dias. Cada alerta de WhatsApp gasta mais 1 consulta por dia. Confira o limite do seu plano no painel da SerpApi e ajuste `VITRINE_BUSCAS_POR_EXECUCAO`.
-
-## WhatsApp
-
-A Evolution API do `docker-compose.yml` roda **no seu PC**, e o GitHub Actions não consegue alcançar `127.0.0.1`. Duas saídas:
-
-- **Rodar os alertas no seu PC**: Agendador de Tarefas do Windows chamando `venv\Scripts\python.exe motor_busca.py` uma vez por dia (o robô do GitHub continua cuidando da página).
-- **Expor a Evolution API**: Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:8080`) ou hospedar num VPS, e colocar essa URL no secret `EVOLUTION_API_URL`.
-
-A Evolution API usa o WhatsApp Web (não oficial): use um número separado e envie só para quem pediu o alerta, para não arriscar bloqueio. Para escalar, o caminho oficial é a WhatsApp Cloud API da Meta.
-
-O botão **"Quero alerta no WhatsApp"** da página aparece quando você coloca seu número em `site/config.js`; ele abre uma conversa com a rota já escrita, e você cadastra o alerta no painel.
-
-## Fontes
+## Fontes de dados
 
 - Aeroportos: [OurAirports](https://github.com/davidmegginson/ourairports-data) — 129 aeroportos brasileiros com voo regular.
-- Ranking de destinos: levantamentos de buscas da Decolar ([jan–fev/2026](https://www.panrotas.com.br/mercado/pesquisas-e-estatisticas/2026/03/decolar-rio-lidera-buscas-de-brasileiros-santiago-e-destino-internacional-mais-procurado_226777.html), [2º sem./2025](https://www.mercadoeeventos.com.br/?p=658055)); posições 14–20 completadas com destinos tradicionais (Miami, Nova York, Madri, Londres, Porto, Barcelona, Mendoza).
+- Ranking de destinos: levantamentos de buscas da Decolar ([jan–fev/2026](https://www.panrotas.com.br/mercado/pesquisas-e-estatisticas/2026/03/decolar-rio-lidera-buscas-de-brasileiros-santiago-e-destino-internacional-mais-procurado_226777.html), [2º sem./2025](https://www.mercadoeeventos.com.br/?p=658055)).
+
+## Licença
+
+[MIT](LICENSE) — use, copie e adapte à vontade, inclusive comercialmente.
