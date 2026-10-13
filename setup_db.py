@@ -29,13 +29,13 @@ def migrar_colunas_alertas(engine):
             # várias origens e não tem mais FK fixa para Destinos.
             connection.execute(text('ALTER TABLE "Alertas" ALTER COLUMN "Preco_Alvo" DROP NOT NULL'))
             connection.execute(text('ALTER TABLE "Alertas" ALTER COLUMN "IATA_Origem" TYPE VARCHAR(64)'))
-            fks = connection.execute(text("""
-                SELECT constraint_name FROM information_schema.table_constraints
-                WHERE table_name = 'Alertas' AND constraint_type = 'FOREIGN KEY'
-                  AND constraint_name LIKE '%iata_origem%'
-            """)).scalars().all()
-            for nome in fks:
-                connection.execute(text(f'ALTER TABLE "Alertas" DROP CONSTRAINT "{nome}"'))
+            # O nome gerado pelo PostgreSQL preserva maiúsculas (por exemplo,
+            # Alertas_IATA_Origem_fkey). Localizar pela coluna evita depender
+            # da capitalização ou de nomes gerados em versões anteriores.
+            for fk in inspect(connection).get_foreign_keys("Alertas"):
+                if fk["constrained_columns"] == ["IATA_Origem"]:
+                    nome = connection.dialect.identifier_preparer.quote(fk["name"])
+                    connection.execute(text(f'ALTER TABLE "Alertas" DROP CONSTRAINT {nome}'))
 
 
 def setup_database(engine=None):
