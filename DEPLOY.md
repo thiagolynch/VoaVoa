@@ -84,6 +84,23 @@ Os GitHub Actions Secrets são separados dos Streamlit Secrets; cadastre as chav
 
 A URL local `http://127.0.0.1:8080` não funciona a partir do GitHub Actions. A Evolution API não é hospedada pelo Streamlit Cloud e precisa de uma hospedagem própria acessível pela internet, com HTTPS, PostgreSQL/Redis e armazenamento persistente. Sem isso, o painel e a consulta SerpApi podem funcionar, mas os avisos WhatsApp não serão entregues.
 
+## 5. Autoatendimento público (opcional)
+
+### Formulário (`cadastro.py`)
+
+Mesmo processo do passo 3, só que num **segundo app** do Streamlit Community Cloud, apontando pro arquivo `cadastro.py`, com os mesmos secrets de `DATABASE_URL` (não precisa de `SERPAPI_KEY` nem Evolution). Diferente do `dashboard.py`, deixe o **Sharing** desse app como público — é pra qualquer visitante usar. A URL gerada vai no `site/config.js` (`cadastroUrl`), pra aparecer o botão "Cadastrar alerta" na vitrine.
+
+### Bot de WhatsApp (`whatsapp_bot.py`)
+
+Roda como container (`whatsapp-bot` no `docker-compose.yml`), na mesma rede da Evolution API — por isso só funciona enquanto a Evolution também estiver rodando localmente (não dá pra usar com o painel no Streamlit Cloud sem antes expor a Evolution publicamente, igual explicado acima pros alertas de WhatsApp).
+
+```powershell
+docker compose up -d --build whatsapp-bot
+& .\venv\Scripts\python.exe configurar_webhook_bot.py
+```
+
+O segundo comando aponta a Evolution API pra chamar o bot quando chegar mensagem; só precisa rodar de novo se a instância da Evolution for recriada.
+
 ## Desenvolvimento local
 
 Com `DATABASE_URL=sqlite:///voavoa.db` no `.env`, execute:
@@ -92,3 +109,5 @@ Com `DATABASE_URL=sqlite:///voavoa.db` no `.env`, execute:
 & .\venv\Scripts\python.exe setup_db.py
 & .\venv\Scripts\python.exe -m streamlit run dashboard.py
 ```
+
+Pra testar o formulário público localmente: `& .\venv\Scripts\python.exe -m streamlit run cadastro.py`.

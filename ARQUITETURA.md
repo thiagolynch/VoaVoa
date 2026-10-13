@@ -92,7 +92,12 @@ CREATE TABLE Alertas (
     Mes_Viagem_Ou_Data TEXT    NOT NULL,  -- 'YYYY-MM' ou 'YYYY-MM-DD'
     Preco_Alvo         REAL    NOT NULL,
     Preco_Atual        REAL,
-    Ultima_Verificacao TEXT
+    Ultima_Verificacao TEXT,
+    Confirmado         INTEGER NOT NULL DEFAULT 1,  -- 0 = pendente de confirmação por WhatsApp
+    Criado_Em          TEXT,
+    Data_Inicio_Janela TEXT,    -- janela de datas flexível (opcional)
+    Data_Fim_Janela    TEXT,
+    Duracao_Min_Noites INTEGER  -- só usado junto com a janela
 );
 ```
 
@@ -147,6 +152,19 @@ A página estática (`site/index.html` + `site/config.js`) lê esse JSON diretam
 
 `whatsapp.py` desativa o envio automaticamente quando roda no GitHub Actions apontando para uma Evolution API em `localhost`/`127.0.0.1` (inalcançável da nuvem) — nesse caso o preço ainda é gravado, só a mensagem não é enviada.
 
+### 5.3 Autoatendimento: formulário público + bot de WhatsApp
+
+Além do `dashboard.py` (cadastro manual, admin), existem duas formas de qualquer pessoa criar o próprio alerta:
+
+- **`cadastro.py`**: app Streamlit público (sem autenticação), com formulário de nome/telefone/origem/destino(s)/preço/data. Destino aceita múltiplos valores (`st.multiselect`) — um alerta é criado por destino. A data pode ser única ou uma janela flexível (início, fim, noites mínimas).
+- **`whatsapp_bot.py`**: servidor Flask que recebe os webhooks `MESSAGES_UPSERT` da Evolution API (configurado por `configurar_webhook_bot.py`) e conduz uma conversa guiada (nome → preço → data/janela → noites, só perguntando o que faltar) até criar o(s) alerta(s). Roda como container `whatsapp-bot` no `docker-compose.yml`, na mesma rede que a Evolution API.
+
+**Confirmação em duas etapas**: alertas criados pelo `cadastro.py` nascem com `Confirmado = 0` — o bot manda uma mensagem pedindo para responder "CONFIRMAR", e só aí o alerta entra na verificação do `motor_busca.py` (que filtra `Confirmado = 1`). Isso evita que alguém cadastre o número de WhatsApp de outra pessoa sem consentimento. Alertas criados diretamente pelo bot já nascem confirmados, porque a própria mensagem já veio do WhatsApp do dono do número. Pedidos nunca confirmados são apagados depois de 48h (`alertas_repo.limpar_alertas_nao_confirmados`, chamado no início de cada execução do `motor_busca.py`).
+
+O estado da conversa em andamento (o que já foi perguntado, o que falta) fica na tabela `Conversas_Bot` (`Telefone`, `Estado`, `Dados` em JSON, `Atualizado_Em`), com expiração de 30 minutos.
+
+**Janela de datas flexível e custo de cota**: não existe uma única consulta da SerpApi que devolva "o melhor preço de um intervalo de datas" — cada combinação de ida precisa de uma consulta própria. Por isso, alertas em modo janela são verificados por **amostragem** (`motor_busca.buscar_melhor_preco_na_janela`): só algumas datas dentro do intervalo são testadas, espaçadas por `JANELA_AMOSTRAGEM_DIAS` (padrão 3 dias), sempre incluindo as duas pontas da janela. Uma janela de 10 dias custa ~4 consultas por verificação em vez de 1. `JANELA_MAX_DIAS` (padrão 30) limita o tamanho máximo do intervalo aceito. O limite `MAX_ALERTAS_ATIVOS` conta linhas de `Alertas`, não consultas — então muitos alertas em modo janela ainda pressionam a cota da SerpApi mais do que esse limite sozinho sugere.
+
 ---
 
 ## 6. Decisões de Design
@@ -157,3 +175,5 @@ A página estática (`site/index.html` + `site/config.js`) lê esse JSON diretam
 - **Evolution API em vez de WhatsApp Business oficial**: custo zero e configuração simples via Docker, ao preço de rodar localmente (não alcançável pelo GitHub Actions) e usar WhatsApp Web não oficial — por isso a recomendação de usar um número dedicado.
 - **`Opt_in`** garante conformidade com LGPD e políticas do WhatsApp.
 - **Códigos IATA como chave primária em `Destinos`**: únicos e semanticamente significativos.
+- **Formulário público exige confirmação por WhatsApp**: sem isso, qualquer um poderia cadastrar o número de outra pessoa sem consentimento. O bot já serve como canal natural pra essa confirmação (reaproveita a mesma infraestrutura de envio).
+- **Amostragem em vez de busca exaustiva na janela de datas**: testar todo dia do intervalo multiplicaria a cota da SerpApi por alerta; a amostragem é uma escolha deliberada de custo × precisão, documentada e configurável (`JANELA_AMOSTRAGEM_DIAS`, `JANELA_MAX_DIAS`).
