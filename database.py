@@ -49,6 +49,11 @@ alertas = Table(
     Column("Preco_Alvo", Float, nullable=False),
     Column("Preco_Atual", Float),
     Column("Ultima_Verificacao", String),
+    Column("Confirmado", Integer, nullable=False, server_default="1"),
+    Column("Criado_Em", String),
+    Column("Data_Inicio_Janela", String),
+    Column("Data_Fim_Janela", String),
+    Column("Duracao_Min_Noites", Integer),
 )
 
 historico_precos = Table(
@@ -63,6 +68,15 @@ Index(
     "idx_historico_precos_alerta_data",
     historico_precos.c.ID_Alerta,
     historico_precos.c.Data_Verificacao,
+)
+
+conversas_bot = Table(
+    "Conversas_Bot",
+    metadata,
+    Column("Telefone", String, primary_key=True),
+    Column("Estado", String, nullable=False),
+    Column("Dados", String),
+    Column("Atualizado_Em", String, nullable=False),
 )
 
 
