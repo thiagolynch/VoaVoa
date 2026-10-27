@@ -1,8 +1,9 @@
 name: Varredura diária de preços
 
 on:
-  schedule:
-    - cron: "17 10 * * *"   # 07:17 no horário de Brasília
+  # Agendamento diário suspenso a pedido do responsável em 2026-10-27.
+  # schedule:
+  #   - cron: "17 10 * * *"   # 07:17 no horário de Brasília
   workflow_dispatch:
 
 permissions:
